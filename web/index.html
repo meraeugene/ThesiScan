@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>ThesiScan</title>
+    <link rel="stylesheet" href="css/index.css" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <style>
+      html,
+      body {
+        height: 100%;
+        font-family: "Segoe UI", sans-serif;
+        position: relative;
+        background: url("TS_bg.jpg") no-repeat center center;
+        background-size: cover;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Logo -->
+    <img src="images/main logo.png" alt="ThesiScan Logo" class="logo" />
+
+    <!-- Role Selection Box -->
+    <div class="container">
+      <h1>Select Your Role</h1>
+      <div class="role-images">
+        <div class="role-option" onclick="selectRole('Librarian')">
+          <img src="TS_librarian.png" alt="Librarian" class="role-image" />
+          <div class="label">Librarian</div>
+        </div>
+        <div class="role-option" onclick="selectRole('Student')">
+          <img src="TS_student.png" alt="Student" class="role-image" />
+          <div class="label">Student</div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      function selectRole(role) {
+        if (role === "Librarian") {
+          window.location.href = "librarianLoginScreen.html";
+        } else if (role === "Student") {
+          window.location.href = "studentLoginScreen.html";
+        }
+      }
+    </script>
+  </body>
+</html>

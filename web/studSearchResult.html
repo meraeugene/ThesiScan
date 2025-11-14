@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Search Results - ThesiScan</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
+    />
+    <link rel="stylesheet" href="css/studSearchResult.css" />
+  </head>
+  <body>
+    <!-- Sidebar -->
+    <div class="sidebar">
+      <div class="logo">
+        <img src="images/sub logo.png" />
+        <span class="logo-text">ThesiScan</span>
+      </div>
+
+      <nav class="nav-links">
+        <a href="studentDashboard.html"
+          ><i class="fas fa-home"></i><span class="link-text">Home</span></a
+        >
+        <a href="studViewProfile.html"
+          ><i class="fas fa-user"></i><span class="link-text">Profile</span></a
+        >
+        <a href="studSearchAct.html"
+          ><i class="fas fa-search"></i
+          ><span class="link-text">Search Activity</span></a
+        >
+        <a href="studUsageSum.html"
+          ><i class="fas fa-chart-line"></i
+          ><span class="link-text">Usage Summary</span></a
+        >
+        <a href="studAccSetting.html"
+          ><i class="fas fa-cog"></i><span class="link-text">Settings</span></a
+        >
+      </nav>
+
+      <div class="logout-link">
+        <a href="#" onclick="logout()"
+          ><i class="fas fa-sign-out-alt"></i
+          ><span class="link-text">Logout</span></a
+        >
+      </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+      <div class="search-results-container">
+        <h2>Search Results</h2>
+        <div class="filter-summary" id="filterSummary"></div>
+        <div class="book-grid" id="resultsContainer"></div>
+      </div>
+    </div>
+
+    <script>
+      const token = localStorage.getItem("token");
+
+      if (!token) {
+        window.location.href = "./";
+      }
+
+      function logout() {
+        localStorage.removeItem("token");
+        localStorage.removeItem("studentId");
+        window.location.href = "index.html"; // send back to role selection
+      }
+
+      document.addEventListener("DOMContentLoaded", () => {
+        const params = new URLSearchParams(window.location.search);
+        const program = params.get("program") || "All";
+        const year = params.get("year") || "Any";
+        const tags = params.get("tags") || "Any";
+        const keyword = params.get("q") || "";
+
+        document.getElementById("filterSummary").innerHTML = `
+          <span><strong>Program:</strong> ${program}</span>
+          <span><strong>Year:</strong> ${year}</span>
+          <span><strong>Tags:</strong> ${tags}</span>
+          <span><strong>Keyword:</strong> ${keyword ? keyword : "None"}</span>
+        `;
+
+        const container = document.getElementById("resultsContainer");
+
+        async function loadTheses() {
+          try {
+            const response = await fetch("http://127.0.0.1:8000/theses");
+            if (!response.ok) {
+              container.innerHTML = `<p>Failed to load results.</p>`;
+              return;
+            }
+            const theses = await response.json();
+            if (!Array.isArray(theses) || theses.length === 0) {
+              container.innerHTML = `<p>Sorry we couldn't find any results.</p>`;
+              return;
+            }
+            // Filter by program, year, tags, and keyword
+            const filteredTheses = theses.filter((thesis) => {
+              const matchProgram =
+                program === "All" || thesis.program_course === program;
+              const matchYear =
+                year === "Any" ||
+                new Date(thesis.date_published).getFullYear().toString() ===
+                  year;
+              const matchTags =
+                tags === "Any" ||
+                (thesis.keywords &&
+                  thesis.keywords.toLowerCase().includes(tags.toLowerCase()));
+              const matchKeyword =
+                !keyword ||
+                thesis.title.toLowerCase().includes(keyword.toLowerCase()) ||
+                thesis.authors.toLowerCase().includes(keyword.toLowerCase()) ||
+                (thesis.keywords &&
+                  thesis.keywords
+                    .toLowerCase()
+                    .includes(keyword.toLowerCase()));
+              return matchProgram && matchYear && matchTags && matchKeyword;
+            });
+            if (filteredTheses.length === 0) {
+              container.innerHTML = `<p>Sorry we couldn't find any results.</p>`;
+            } else {
+              container.innerHTML = "";
+              container.className = "book-grid";
+              filteredTheses.forEach((thesis) => {
+                const bookCard = document.createElement("a");
+                bookCard.href = `studBookDets1.html?thesis_id=${thesis.id}`;
+                bookCard.className = "book-card";
+                bookCard.innerHTML = `
+                  <div class="book-title">${thesis.title}</div>
+                  <div class="book-meta">By ${thesis.authors} • ${new Date(
+                  thesis.date_published
+                ).getFullYear()} • ${thesis.program_course}</div>
+                `;
+                container.appendChild(bookCard);
+              });
+            }
+          } catch (err) {
+            container.innerHTML = `<p>Error loading results: ${err}</p>`;
+            console.error("Error fetching theses:", err);
+          }
+        }
+        loadTheses();
+      });
+    </script>
+  </body>
+</html>

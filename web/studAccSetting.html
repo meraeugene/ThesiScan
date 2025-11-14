@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Account Settings - ThesiScan</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
+    />
+    <link rel="stylesheet" href="css/studAccSetting.css" />
+  </head>
+  <body>
+    <!-- Sidebar -->
+    <div class="sidebar">
+      <div class="logo">
+        <img src="images/sub logo.png" />
+        <span class="logo-text">ThesiScan</span>
+      </div>
+
+      <nav class="nav-links">
+        <a href="studentDashboard.html"
+          ><i class="fas fa-home"></i><span class="link-text">Home</span></a
+        >
+        <a href="studViewProfile.html"
+          ><i class="fas fa-user"></i><span class="link-text">Profile</span></a
+        >
+        <a href="studSearchAct.html"
+          ><i class="fas fa-search"></i
+          ><span class="link-text">Search Activity</span></a
+        >
+        <a href="studUsageSum.html"
+          ><i class="fas fa-chart-line"></i
+          ><span class="link-text">Usage Summary</span></a
+        >
+        <a href="studAccSetting.html"
+          ><i class="fas fa-cog"></i><span class="link-text">Settings</span></a
+        >
+      </nav>
+
+      <div class="logout-link">
+        <a href="#" onclick="logout()"
+          ><i class="fas fa-sign-out-alt"></i
+          ><span class="link-text">Logout</span></a
+        >
+      </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+      <h2 class="section-title">Account Settings</h2>
+      <div class="settings-container">
+        <div class="profile-picture-wrapper">
+          <img
+            src="TS_student.png"
+            alt="Profile Picture"
+            class="profile-picture"
+            id="profilePreview"
+          />
+          <br />
+          <label for="profileUpload" class="upload-label"
+            >Change Profile Picture</label
+          >
+          <input type="file" id="profileUpload" accept="image/*" />
+        </div>
+
+        <form>
+          <div class="form-row">
+            <div class="form-pair">
+              <label for="name">Full Name</label>
+              <input type="text" id="name" name="name" />
+            </div>
+
+            <div class="form-pair">
+              <label for="program">Program/Course</label>
+              <input type="text" id="program" name="program" disabled />
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-pair">
+              <label for="studentId">Student ID</label>
+              <input type="text" id="studentId" name="studentId" disabled />
+            </div>
+
+            <div class="form-pair">
+              <label for="year">Year Level</label>
+              <input type="text" id="year" name="year" disabled />
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-pair">
+              <label for="email">Email</label>
+              <input
+                type="email"
+                id="email"
+                name="email"
+                autocomplete="email"
+              />
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-pair">
+              <label for="password">New Password</label>
+              <input
+                type="password"
+                id="password"
+                name="password"
+                placeholder="Enter new password"
+                autocomplete="new-password"
+              />
+            </div>
+          </div>
+
+          <button type="submit" class="save-btn">Save</button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Script -->
+    <script>
+      const token = localStorage.getItem("token");
+      const id = localStorage.getItem("studentId"); // stored at login
+
+      if (!token) {
+        window.location.href = "./"; // redirect if not logged in
+      }
+
+      function logout() {
+        localStorage.removeItem("token");
+        localStorage.removeItem("studentId");
+        localStorage.removeItem("studentUser");
+        window.location.href = "index.html"; // redirect to role selection
+      }
+
+      document.addEventListener("DOMContentLoaded", async () => {
+        const profileUpload = document.getElementById("profileUpload");
+        const profilePreview = document.getElementById("profilePreview");
+        const form = document.querySelector("form");
+
+        // --- Fetch student profile from backend ---
+        let user;
+        try {
+          const response = await fetch(`http://127.0.0.1:8000/users/${id}`, {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          });
+          if (!response.ok) throw new Error("Failed to fetch profile");
+
+          user = await response.json();
+        } catch (err) {
+          console.error(err);
+          alert("Failed to load profile. Please login again.");
+          return;
+        }
+
+        // --- Populate form fields ---
+        document.getElementById("name").value = user.full_name || "";
+        document.getElementById("program").value = user.program_course || "";
+        document.getElementById("studentId").value = user.student_id || "";
+        document.getElementById("year").value = user.year_level || "";
+        document.getElementById("email").value = user.email || "";
+
+        if (user.profile_picture) {
+          profilePreview.src = user.profile_picture.startsWith("/static/")
+            ? `http://127.0.0.1:8000${
+                user.profile_picture
+              }?t=${new Date().getTime()}`
+            : user.profile_picture;
+        } else {
+          profilePreview.src = "TS_student.png";
+        }
+        profilePreview.onerror = () => (profilePreview.src = "TS_student.png");
+
+        // --- Live preview for new profile picture ---
+        profileUpload.addEventListener("change", () => {
+          const file = profileUpload.files[0];
+          if (file) {
+            const reader = new FileReader();
+            reader.onload = (e) => (profilePreview.src = e.target.result);
+            reader.readAsDataURL(file);
+          }
+        });
+
+        // --- Update profile ---
+        form.addEventListener("submit", async (e) => {
+          e.preventDefault();
+          if (
+            !confirm(
+              "Are you sure you want to save these changes to your profile?"
+            )
+          )
+            return;
+
+          const email = document.getElementById("email").value;
+          const password = document.getElementById("password").value;
+          const profilePicFile = profileUpload.files[0];
+
+          const formData = new FormData();
+          formData.append("student_id", user.student_id);
+          formData.append("email", email);
+          if (password) formData.append("password", password);
+          if (profilePicFile)
+            formData.append("profile_picture", profilePicFile);
+
+          try {
+            const response = await fetch(
+              "http://127.0.0.1:8000/users/update/",
+              {
+                method: "POST",
+                body: formData,
+              }
+            );
+
+            if (!response.ok) throw new Error("Failed to update profile");
+
+            const updatedUser = await response.json();
+          } catch (err) {
+            console.error(err);
+            alert("Failed to update profile. Please try again later.");
+          }
+        });
+      });
+    </script>
+  </body>
+</html>

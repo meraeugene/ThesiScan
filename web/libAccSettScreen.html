@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Account Settings</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+ <link rel="stylesheet" href="css/libAccSettScreen.css" />
+  <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/notyf@3/notyf.min.css"
+    />
+</head>
+<body>
+
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <div class="logo">
+      <img src="images/sub logo.png" alt="Logo" />
+      <span class="logo-text">ThesiScan</span>
+    </div>
+
+    <nav class="nav-links">
+      <a href="librarianDashboard.html">
+        <i class="fas fa-home"></i>
+        <span class="link-text">Home</span>
+      </a>
+      <a href="libViewProfScreen.html">
+        <i class="fas fa-user"></i>
+        <span class="link-text">Profile</span>
+      <a href="libBookReportScreen.html">
+        <i class="fas fa-book"></i>
+        <span class="link-text">Book Reports</span>
+      </a>
+      </a>
+      <a href="libAccSettScreen.html">
+        <i class="fas fa-cog"></i>
+        <span class="link-text">Settings</span>
+      </a>
+    </nav>
+
+   <div class="logout-link">
+  <a href="#" onclick="logout()">
+    <i class="fas fa-sign-out-alt"></i>
+    <span class="link-text">Logout</span>
+  </a>
+</div>
+
+  </div>
+
+  <!-- Main Content -->
+  <div class="main-content">
+    <h2 class="page-title">Account Settings</h2>
+
+    <div class="settings-container">
+      <form id="librarianSettingsForm" enctype="multipart/form-data">
+        <div class="profile-picture-wrapper">
+          <img id="profilePreview" class="profile-picture" src="TS_librarian.png" alt="Profile Picture" />
+          <div style="width:100%;display:flex;justify-content:center;">
+            <label for="profileUpload" class="upload-label" style="margin-top:10px;">
+              <i class="fa fa-camera"></i> Change Photo
+            </label>
+          </div>
+          <input type="file" id="profileUpload" name="profile_picture" accept="image/*" style="display:none;" />
+        </div>
+        <div class="form-row">
+          <label for="fullName">Full Name</label>
+          <input type="text" id="fullName" name="full_name" required />
+        </div>
+        <div class="form-row">
+          <label for="email">Email</label>
+          <input type="email" id="email" name="email" required />
+        </div>
+        <div class="form-row">
+          <label for="username">Username</label>
+          <input type="text" id="username" name="username" required disabled autocomplete="username" />
+        </div>
+        <div class="form-row">
+          <label for="role">Role</label>
+          <input type="text" id="role" name="role" required />
+        </div>
+        <div class="form-row">
+          <label for="contact">Contact</label>
+          <input type="text" id="contact" name="contact" />
+        </div>
+        <div class="form-row">
+          <label for="password">Password</label>
+          <input type="password" id="password" name="password" placeholder="Enter new password" autocomplete="new-password" />
+        </div>
+        <button type="submit" class="save-btn">Save</button>
+      </form>
+    </div>
+    <div id="confirmPopup" style="display:none;position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,0.3);z-index:9999;align-items:center;justify-content:center;">
+      <div style="background:#fff;padding:32px 24px;border-radius:12px;box-shadow:0 4px 16px rgba(0,0,0,0.15);text-align:center;">
+        <p style="font-size:18px;color:#0288D1;margin-bottom:18px;">Are you sure you want to save changes?</p>
+        <button id="confirmYes" style="background:#0288D1;color:#fff;padding:8px 24px;border:none;border-radius:6px;margin-right:12px;">Yes</button>
+        <button id="confirmNo" style="background:#eee;color:#0288D1;padding:8px 24px;border:none;border-radius:6px;">No</button>
+      </div>
+    </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/notyf@3/notyf.min.js"></script>
+  <script>
+    const token = localStorage.getItem("token");
+
+    if (!token) {
+      window.location.href = "./";
+    }
+
+    function logout() {
+      localStorage.removeItem("token");
+      localStorage.removeItem("librarianId");
+      window.location.href = "index.html"; // send back to role selection
+    }
+
+  // Initialize Notyf
+  const notyf = new Notyf();
+
+  document.addEventListener('DOMContentLoaded', () => {
+    const profileUpload = document.getElementById('profileUpload');
+    const profilePreview = document.getElementById('profilePreview');
+    const form = document.getElementById('librarianSettingsForm');
+
+    // Get librarian ID from localStorage
+    const librarianId = localStorage.getItem('librarianId');
+
+    if (librarianId) {
+      fetch(`http://127.0.0.1:8000/librarian/id/${librarianId}`)
+        .then((response) => {
+          if (!response.ok) throw new Error("Failed to fetch librarian data");
+          return response.json();
+        })
+        .then((librarian) => {
+          // Populate form fields
+          document.getElementById('fullName').value = librarian.full_name || '';
+          document.getElementById('email').value = librarian.email || '';
+          document.getElementById('username').value = librarian.username || '';
+          document.getElementById('role').value = librarian.role || '';
+          document.getElementById('contact').value = librarian.contact || '';
+
+          // Handle profile picture
+          if (librarian.profile_picture && librarian.profile_picture.startsWith('/static/')) {
+            profilePreview.src = 'http://127.0.0.1:8000' + librarian.profile_picture + '?t=' + new Date().getTime();
+          } else {
+            profilePreview.src = 'TS_librarian.png';
+          }
+
+          profilePreview.onerror = function () {
+            profilePreview.src = 'TS_librarian.png';
+          };
+        })
+        .catch((err) => {
+          console.error(err);
+          notyf.error("Failed to load profile data.");
+        });
+    } else {
+      notyf.error("No librarian ID found. Please login again.");
+    }
+
+    // Profile picture preview
+    profileUpload.addEventListener('change', function(e) {
+      const file = this.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          profilePreview.src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+      }
+    });
+
+    // Form submission
+    form.addEventListener('submit', async function(e) {
+      e.preventDefault();
+      const formData = new FormData(form);
+
+      formData.set('username', document.getElementById('username').value);
+
+      try {
+        const response = await fetch('http://127.0.0.1:8000/librarian/update/', {
+          method: 'POST',
+          body: formData
+        });
+
+        if (response.ok) {
+          const updated = await response.json();
+          // Update localStorage ID remains the same, optional: store full object if needed
+          alert('Profile updated successfully.');
+        } else {
+          const err = await response.json();
+          console.error('Update failed:', err);
+          notyf.error(err.detail || 'Failed to update profile.');
+        }
+      } catch (err) {
+        console.error('Network error:', err);
+        notyf.error('Network error. Please try again later.');
+      }
+    });
+
+  });
+</script>
+
+</body>
+</html>

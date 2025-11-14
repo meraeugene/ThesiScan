@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Usage Summary - ThesiScan</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
+    />
+    <link rel="stylesheet" href="css/studUsageSum.css" />
+  </head>
+  <body>
+    <!-- Sidebar -->
+    <div class="sidebar">
+      <div class="logo">
+        <img src="images/sub logo.png" />
+        <span class="logo-text">ThesiScan</span>
+      </div>
+
+      <nav class="nav-links">
+        <a href="studentDashboard.html"
+          ><i class="fas fa-home"></i><span class="link-text">Home</span></a
+        >
+        <a href="studViewProfile.html"
+          ><i class="fas fa-user"></i><span class="link-text">Profile</span></a
+        >
+        <a href="studSearchAct.html"
+          ><i class="fas fa-search"></i
+          ><span class="link-text">Search Activity</span></a
+        >
+        <a href="studUsageSum.html"
+          ><i class="fas fa-chart-line"></i
+          ><span class="link-text">Usage Summary</span></a
+        >
+        <a href="studAccSetting.html"
+          ><i class="fas fa-cog"></i><span class="link-text">Settings</span></a
+        >
+      </nav>
+
+      <div class="logout-link">
+        <a href="#" onclick="logout()"
+          ><i class="fas fa-sign-out-alt"></i
+          ><span class="link-text">Logout</span></a
+        >
+      </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+      <h2 class="page-title">Usage Summary</h2>
+
+      <div class="summary-container">
+        <div class="stats-grid">
+          <div class="stat-box" id="searchCountBox">
+            <h3 id="searchCount">0</h3>
+            <p>Total Theses Read</p>
+          </div>
+          <div class="stat-box" id="bookmarkCountBox">
+            <h3 id="bookmarkCount">0</h3>
+            <p>Total Theses Bookmarked</p>
+          </div>
+          <div class="stat-box" id="onCampusCountBox">
+            <h3 id="onCampusCount">0</h3>
+            <p>Theses Accessed On-Campus</p>
+          </div>
+          <div class="stat-box" id="offCampusCountBox">
+            <h3 id="offCampusCount">0</h3>
+            <p>Theses Accessed Off-Campus</p>
+          </div>
+        </div>
+
+        <div class="note" id="summaryNote">Loading usage summary...</div>
+      </div>
+    </div>
+  </body>
+  <script>
+    function parseJwt(token) {
+      try {
+        const base64Url = token.split(".")[1];
+        const base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
+        const jsonPayload = decodeURIComponent(
+          atob(base64)
+            .split("")
+            .map((c) => "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2))
+            .join("")
+        );
+        return JSON.parse(jsonPayload);
+      } catch (err) {
+        return null;
+      }
+    }
+
+    const token = localStorage.getItem("token");
+    if (!token) window.location.href = "./";
+
+    // decode token to get student_id
+    const decoded = parseJwt(token);
+    const studentId = decoded?.student_id;
+
+    if (!studentId) {
+      localStorage.removeItem("token");
+      window.location.href = "index.html";
+    }
+
+    function logout() {
+      localStorage.removeItem("token");
+      localStorage.removeItem("studentId");
+      window.location.href = "index.html"; // send back to role selection
+    }
+
+    document.addEventListener("DOMContentLoaded", async () => {
+      try {
+        // Fetch search history
+        const searchRes = await fetch(
+          `http://127.0.0.1:8000/users/search-history/${studentId}`
+        );
+        const searchHistory = searchRes.ok ? await searchRes.json() : [];
+        document.getElementById("searchCount").textContent =
+          searchHistory.length;
+
+        // Count On-Campus and Off-Campus
+        let onCampus = 0,
+          offCampus = 0;
+        let firstDate = null,
+          lastDate = null;
+        searchHistory.forEach((h) => {
+          if ((h.access_location || "").toLowerCase().includes("on-campus"))
+            onCampus++;
+          if ((h.access_location || "").toLowerCase().includes("off-campus"))
+            offCampus++;
+          // Track first and last search dates
+          if (h.date_accessed) {
+            const d = new Date(h.date_accessed);
+            if (!firstDate || d < firstDate) firstDate = d;
+            if (!lastDate || d > lastDate) lastDate = d;
+          }
+        });
+        document.getElementById("onCampusCount").textContent = onCampus;
+        document.getElementById("offCampusCount").textContent = offCampus;
+
+        // Fetch bookmarks
+        const bookmarkRes = await fetch(
+          `http://127.0.0.1:8000/users/bookmarks/${studentId}`
+        );
+        const bookmarks = bookmarkRes.ok ? await bookmarkRes.json() : [];
+
+        // Count unique thesis IDs (to avoid counting duplicates)
+        const uniqueTheses = new Set(bookmarks.map((b) => b.thesis_id));
+        document.getElementById("bookmarkCount").textContent =
+          uniqueTheses.size;
+
+        const options = { year: "numeric", month: "long", day: "numeric" };
+        const today = new Date();
+        document.getElementById(
+          "summaryNote"
+        ).textContent = `* Data reflects your activity up to ${today.toLocaleDateString(
+          undefined,
+          options
+        )}.`;
+      } catch (err) {
+        document.getElementById("summaryNote").textContent =
+          "Failed to load usage summary.";
+      }
+    });
+  </script>
+</html>

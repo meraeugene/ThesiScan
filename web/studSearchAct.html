@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Search Activity - ThesiScan</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
+    />
+    <link rel="stylesheet" href="css/studSearchAct.css" />
+  </head>
+  <body>
+    <!-- Sidebar -->
+    <div class="sidebar">
+      <div class="logo">
+        <img src="images/sub logo.png" />
+        <span class="logo-text">ThesiScan</span>
+      </div>
+
+      <nav class="nav-links">
+        <a href="studentDashboard.html"
+          ><i class="fas fa-home"></i><span class="link-text">Home</span></a
+        >
+        <a href="studViewProfile.html"
+          ><i class="fas fa-user"></i><span class="link-text">Profile</span></a
+        >
+        <a href="studSearchAct.html"
+          ><i class="fas fa-search"></i
+          ><span class="link-text">Search Activity</span></a
+        >
+        <a href="studUsageSum.html"
+          ><i class="fas fa-chart-line"></i
+          ><span class="link-text">Usage Summary</span></a
+        >
+        <a href="studAccSetting.html"
+          ><i class="fas fa-cog"></i><span class="link-text">Settings</span></a
+        >
+      </nav>
+
+      <div class="logout-link">
+        <a href="roleScreen.html"
+          ><i class="fas fa-sign-out-alt"></i
+          ><span class="link-text">Logout</span></a
+        >
+      </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+      <h2 class="page-title">Search Activity</h2>
+
+      <div class="activity-container">
+        <div class="tabs">
+          <button class="tab-button active" data-tab="history">
+            Search History
+          </button>
+          <button class="tab-button" data-tab="bookmarks">Bookmarks</button>
+        </div>
+
+        <div class="tab-content active" id="history">
+          <table id="historyTable">
+            <thead>
+              <tr>
+                <th>Book Title</th>
+                <th>Author</th>
+                <th>Date Accessed</th>
+                <th>Access Location</th>
+              </tr>
+            </thead>
+            <tbody id="historyBody"></tbody>
+          </table>
+          <div id="historyPagination" class="pagination"></div>
+          <div class="empty-message" id="historyEmpty" style="display: none">
+            No search history found.
+          </div>
+        </div>
+
+        <div class="tab-content" id="bookmarks">
+          <table id="bookmarksTable">
+            <thead>
+              <tr>
+                <th>Thesis Title</th>
+                <th>Author</th>
+                <th>Program</th>
+                <th>Date Bookmarked</th>
+              </tr>
+            </thead>
+            <tbody id="bookmarksBody"></tbody>
+          </table>
+          <div id="bookmarksPagination" class="pagination"></div>
+          <div class="empty-message" id="bookmarksEmpty" style="display: none">
+            No bookmarks found.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Script -->
+    <script>
+      function parseJwt(token) {
+        try {
+          const base64Url = token.split(".")[1];
+          const base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
+          const jsonPayload = decodeURIComponent(
+            atob(base64)
+              .split("")
+              .map((c) => "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2))
+              .join("")
+          );
+          return JSON.parse(jsonPayload);
+        } catch (err) {
+          return null;
+        }
+      }
+
+      const token = localStorage.getItem("token");
+      if (!token) window.location.href = "./";
+
+      // decode token to get student_id
+      const decoded = parseJwt(token);
+      const studentId = decoded?.student_id;
+
+      if (!studentId) {
+        localStorage.removeItem("token");
+        window.location.href = "index.html";
+      }
+
+      function logout() {
+        localStorage.removeItem("token");
+        localStorage.removeItem("studentId");
+        window.location.href = "index.html"; // send back to role selection
+      }
+
+      document.addEventListener("DOMContentLoaded", () => {
+        const tabButtons = document.querySelectorAll(".tab-button");
+        const tabContents = document.querySelectorAll(".tab-content");
+
+        tabButtons.forEach((button) => {
+          button.addEventListener("click", () => {
+            tabButtons.forEach((btn) => btn.classList.remove("active"));
+            button.classList.add("active");
+
+            tabContents.forEach((tab) => {
+              tab.classList.remove("active");
+              if (tab.id === button.dataset.tab) {
+                tab.classList.add("active");
+              }
+            });
+          });
+        });
+
+        const rowsPerPage = 5;
+        const maxVisiblePages = 5; // max number of page buttons visible at a time
+
+        function paginate(data, tableBodyId, paginationId, columns) {
+          let currentPage = 1;
+          const totalPages = Math.ceil(data.length / rowsPerPage);
+
+          function renderPage(page) {
+            const tbody = document.getElementById(tableBodyId);
+            tbody.innerHTML = "";
+            const start = (page - 1) * rowsPerPage;
+            const end = start + rowsPerPage;
+            data.slice(start, end).forEach((item) => {
+              const tr = document.createElement("tr");
+              tr.innerHTML = columns(item);
+              tbody.appendChild(tr);
+            });
+            renderPagination();
+          }
+
+          function renderPagination() {
+            const container = document.getElementById(paginationId);
+            container.innerHTML = "";
+
+            const prevBtn = document.createElement("button");
+            prevBtn.textContent = "Previous";
+            prevBtn.disabled = currentPage === 1;
+            prevBtn.onclick = () => {
+              if (currentPage > 1) {
+                currentPage--;
+                renderPage(currentPage);
+              }
+            };
+            container.appendChild(prevBtn);
+
+            let startPage = Math.max(
+              1,
+              currentPage - Math.floor(maxVisiblePages / 2)
+            );
+            let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+            if (endPage - startPage < maxVisiblePages - 1) {
+              startPage = Math.max(1, endPage - maxVisiblePages + 1);
+            }
+
+            for (let i = startPage; i <= endPage; i++) {
+              const btn = document.createElement("button");
+              btn.textContent = i;
+              btn.classList.toggle("active", i === currentPage);
+              btn.onclick = () => {
+                currentPage = i;
+                renderPage(currentPage);
+              };
+              container.appendChild(btn);
+            }
+
+            const nextBtn = document.createElement("button");
+            nextBtn.textContent = "Next";
+            nextBtn.disabled = currentPage === totalPages;
+            nextBtn.onclick = () => {
+              if (currentPage < totalPages) {
+                currentPage++;
+                renderPage(currentPage);
+              }
+            };
+            container.appendChild(nextBtn);
+          }
+
+          renderPage(currentPage);
+        }
+
+        // Fetch search history
+        fetch(`http://127.0.0.1:8000/users/search-history/${studentId}`)
+          .then((res) => (res.ok ? res.json() : []))
+          .then((data) => {
+            const historyEmpty = document.getElementById("historyEmpty");
+            if (data && data.length > 0) {
+              data.sort(
+                (a, b) => new Date(b.date_accessed) - new Date(a.date_accessed)
+              );
+              paginate(data, "historyBody", "historyPagination", (item) => {
+                const date = new Date(item.date_accessed)
+                  .toISOString()
+                  .split("T")[0];
+                return `<td>${item.book_title}</td><td>${item.author}</td><td>${date}</td><td>${item.access_location}</td>`;
+              });
+              historyEmpty.style.display = "none";
+            } else historyEmpty.style.display = "block";
+          })
+          .catch(
+            () =>
+              (document.getElementById("historyEmpty").style.display = "block")
+          );
+
+        // Fetch bookmarks
+        fetch(`http://127.0.0.1:8000/users/bookmarks/${studentId}`)
+          .then((res) => (res.ok ? res.json() : []))
+          .then((data) => {
+            const bookmarksEmpty = document.getElementById("bookmarksEmpty");
+            if (data && data.length > 0) {
+              const uniqueBookmarks = new Map();
+              data.sort(
+                (a, b) =>
+                  new Date(b.date_bookmarked) - new Date(a.date_bookmarked)
+              );
+              data.forEach((item) => {
+                if (!uniqueBookmarks.has(item.thesis_title)) {
+                  uniqueBookmarks.set(item.thesis_title, item);
+                }
+              });
+              const bookmarksArray = Array.from(uniqueBookmarks.values());
+              paginate(
+                bookmarksArray,
+                "bookmarksBody",
+                "bookmarksPagination",
+                (item) =>
+                  `<td>${item.thesis_title}</td><td>${item.author}</td><td>${item.program}</td><td>${item.date_bookmarked}</td>`
+              );
+              bookmarksEmpty.style.display = "none";
+            } else bookmarksEmpty.style.display = "block";
+          })
+          .catch(
+            () =>
+              (document.getElementById("bookmarksEmpty").style.display =
+                "block")
+          );
+      });
+    </script>
+  </body>
+</html>

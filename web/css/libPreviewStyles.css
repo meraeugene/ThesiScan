@@ -1,0 +1,364 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: "Segoe UI", sans-serif;
+}
+
+/* ===== Sidebar Styles ===== */
+body {
+  margin: 0;
+  font-family: "Poppins", sans-serif;
+  background-color: #f5f6fa;
+  color: #333;
+  display: flex;
+}
+.sidebar {
+  width: 70px;
+  height: 100vh;
+  background-color: #ffffff;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  transition: width 0.3s ease;
+  border-right: 1px solid #ddd;
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 1000;
+  overflow: hidden;
+}
+
+.sidebar:hover {
+  width: 250px;
+  align-items: flex-start;
+}
+
+.sidebar .logo {
+  width: 100%;
+  height: 80px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+  transition: padding-left 0.3s ease, justify-content 0.3s ease;
+}
+
+.sidebar:hover .logo {
+  justify-content: flex-start;
+  padding-left: 20px;
+}
+
+.sidebar .logo img {
+  width: 42px;
+  height: 42px;
+  object-fit: contain;
+}
+
+.logo-text {
+  position: absolute;
+  left: 80px;
+  color: #0288d1;
+  font-weight: 600;
+  font-size: 18px;
+  white-space: nowrap;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+
+.sidebar:hover .logo-text {
+  opacity: 1;
+  visibility: visible;
+}
+
+.nav-links,
+.logout-link {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  align-items: center;
+  transition: all 0.3s ease;
+}
+
+.sidebar:hover .nav-links,
+.sidebar:hover .logout-link {
+  align-items: flex-start;
+  padding-left: 20px;
+}
+
+.sidebar a {
+  color: #0288d1;
+  font-weight: 600;
+  text-decoration: none;
+  margin: 8px 0;
+  display: flex;
+  align-items: center;
+  font-size: 18px;
+  padding: 10px;
+  border-radius: 8px;
+  width: calc(100% - 20px);
+  justify-content: flex-start;
+  transition: background 0.3s ease;
+}
+
+.sidebar a:hover {
+  background-color: #e1f5fe;
+}
+
+.sidebar a i {
+  font-size: 20px;
+  min-width: 25px;
+  text-align: center;
+  color: #0288d1;
+}
+
+.link-text {
+  margin-left: 15px;
+  white-space: nowrap;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+
+.sidebar:hover .link-text {
+  opacity: 1;
+  visibility: visible;
+}
+
+/* ===== Main Content ===== */
+.main-content {
+  margin-left: 70px;
+  padding: 40px 20px;
+  flex: 1;
+  justify-content: center;
+  align-items: flex-start;
+  transition: margin-left 0.3s ease;
+}
+
+h1 {
+  text-align: center;
+}
+
+.sidebar:hover ~ .main-content {
+  margin-left: 250px;
+}
+
+/* ===== Page Container ===== */
+.container {
+  display: flex;
+  gap: 30px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+/* ===== Preview Section ===== */
+.preview {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  width: 100%;
+  border-radius: 12px;
+  background: #fafafa;
+  padding: 30px;
+  border-radius: 10px;
+  border: 1px solid #ddd;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+}
+
+.preview h3 {
+  margin-bottom: 12px;
+  font-size: 18px;
+  font-weight: 600;
+  color: #111827;
+}
+
+.preview-box {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border-radius: 12px;
+}
+
+.preview-box video,
+.preview-box canvas,
+.preview-box img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover; /* fills entire box, no black borders */
+  background: transparent;
+}
+
+/* Canvas hidden unless needed */
+.preview-box canvas {
+  display: none;
+}
+
+/* Preview Buttons */
+.preview button {
+  padding: 10px;
+  margin: 8px 5px;
+  border: none;
+  border-radius: 6px;
+  background-color: #57a6d1;
+  color: white;
+  font-size: 14px;
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+.step-btn {
+  padding: 6px 12px;
+  border: 1px solid #ccc;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: background 0.2s, color 0.2s;
+}
+
+/* ===== Form Section ===== */
+.form-container {
+  width: 100%;
+  max-width: 800px;
+}
+
+.form-box {
+  background: #fafafa;
+  padding: 30px;
+  border-radius: 10px;
+  border: 1px solid #ddd;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+}
+
+.form-box h3 {
+  margin-bottom: 20px;
+  color: #111827;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 15px;
+}
+
+.form-group label {
+  margin-bottom: 6px;
+  font-weight: 500;
+  font-size: 14px;
+  color: #333;
+}
+
+.form-group input,
+.form-group textarea {
+  padding: 10px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  font-size: 14px;
+  outline: none;
+  width: 100%;
+  resize: vertical;
+}
+
+textarea[name="abstract"] {
+  min-height: 300px; /* or 100% if you want to fill parent */
+  height: 100%;
+  resize: vertical; /* user can still adjust height */
+}
+
+.form-group input:focus,
+.form-group textarea:focus {
+  border-color: #0288d1;
+}
+
+textarea {
+  min-height: 60px;
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.form-actions button {
+  padding: 10px 18px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;
+  font-size: 14px;
+}
+
+.form-actions .cancel {
+  background-color: #e0e0e0;
+  color: #333;
+}
+
+.form-actions .cancel:hover {
+  background-color: #d6d6d6;
+}
+
+.form-actions .save {
+  background-color: #0288d1;
+  color: white;
+}
+
+.form-actions .save:hover {
+  background-color: #0277bd;
+}
+
+.capture-indicator {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: #28a745; /* green */
+  color: white;
+  font-size: 24px;
+  font-weight: bold;
+  padding: 5px 10px;
+  border-radius: 50%;
+  display: none; /* hidden by default */
+  box-shadow: 0 0 5px rgba(0, 0, 0, 0.3);
+  z-index: 10;
+}
+
+.preview .btn-capture {
+  background-color: #0288d1;
+  color: white;
+}
+.preview .btn-capture:hover {
+  background-color: #0277bd;
+}
+
+.preview .btn-retake {
+  background-color: #f57c00;
+  color: white;
+}
+.preview .btn-retake:hover {
+  background-color: #ef6c00;
+}
+
+.preview .btn-extract {
+  background-color: #43a047;
+  color: white;
+}
+.preview .btn-extract:hover {
+  background-color: #388e3c;
+}
+
+.preview .btn-proceed {
+  background-color: 0288d1;
+  color: white;
+}
+.preview .btn-proceed:hover {
+  background-color: #0277bd;
+}

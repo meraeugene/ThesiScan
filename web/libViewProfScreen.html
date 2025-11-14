@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Admin Profile - ThesiScan</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
+    />
+    <link rel="stylesheet" href="css/libViewProfScreen.css" />
+  </head>
+  <body>
+    <!-- Sidebar -->
+    <div class="sidebar">
+      <div class="logo">
+        <img src="images/sub logo.png" alt="Logo" />
+        <span class="logo-text">ThesiScan</span>
+      </div>
+
+      <nav class="nav-links">
+        <a href="librarianDashboard.html">
+          <i class="fas fa-home"></i>
+          <span class="link-text">Home</span>
+        </a>
+        <a href="libViewProfScreen.html">
+          <i class="fas fa-user"></i>
+          <span class="link-text">Profile</span>
+          <a href="libBookReportScreen.html">
+            <i class="fas fa-book"></i>
+            <span class="link-text">Book Reports</span>
+          </a>
+        </a>
+        <a href="libAccSettScreen.html">
+          <i class="fas fa-cog"></i>
+          <span class="link-text">Settings</span>
+        </a>
+      </nav>
+
+      <div class="logout-link">
+        <a href="#" onclick="logout()">
+          <i class="fas fa-sign-out-alt"></i>
+          <span class="link-text">Logout</span>
+        </a>
+      </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+      <h2 class="page-title">Admin Profile</h2>
+
+      <div class="profile-container">
+        <img
+          id="profilePicture"
+          src="TS_librarian.png"
+          alt="Profile Picture"
+          class="profile-picture"
+        />
+        <div class="profile-info">
+          <div class="profile-row">
+            <label>Full Name:</label>
+            <span id="fullName">Loading...</span>
+          </div>
+          <div class="profile-row">
+            <label>Email:</label>
+            <span id="email">Loading...</span>
+          </div>
+          <div class="profile-row">
+            <label>Username:</label>
+            <span id="username">Loading...</span>
+          </div>
+          <div class="profile-row">
+            <label>Role:</label>
+            <span id="role">Loading...</span>
+          </div>
+          <div class="profile-row">
+            <label>Contact:</label>
+            <span id="contact">Loading...</span>
+          </div>
+        </div>
+      </div>
+      <script>
+        const token = localStorage.getItem("token");
+
+        if (!token) {
+          window.location.href = "./";
+        }
+
+        function logout() {
+          localStorage.removeItem("token");
+          localStorage.removeItem("librarianId");
+          window.location.href = "index.html"; // send back to role selection
+        }
+
+        // Get librarian ID from localStorage
+        const librarianId = localStorage.getItem("librarianId");
+
+        if (librarianId) {
+          fetch(`http://127.0.0.1:8000/librarian/id/${librarianId}`)
+            .then((response) => {
+              if (!response.ok)
+                throw new Error("Failed to fetch librarian data");
+              return response.json();
+            })
+            .then((librarian) => {
+              document.getElementById("fullName").textContent =
+                librarian.full_name || "";
+              document.getElementById("email").textContent =
+                librarian.email || "";
+              document.getElementById("username").textContent =
+                librarian.username || "";
+              document.getElementById("role").textContent =
+                librarian.role || "";
+              document.getElementById("contact").textContent =
+                librarian.contact || "";
+
+              // Handle profile picture
+              const profilePicture = document.getElementById("profilePicture");
+              if (
+                librarian.profile_picture &&
+                librarian.profile_picture.startsWith("/static/")
+              ) {
+                profilePicture.src =
+                  "http://127.0.0.1:8000" +
+                  librarian.profile_picture +
+                  "?t=" +
+                  new Date().getTime();
+                profilePicture.onerror = function () {
+                  profilePicture.src = "TS_librarian.png";
+                };
+              } else {
+                profilePicture.src = "TS_librarian.png";
+              }
+            })
+            .catch((err) => {
+              console.error(err);
+              document.getElementById("fullName").textContent = "No data";
+              document.getElementById("email").textContent = "No data";
+              document.getElementById("username").textContent = "No data";
+              document.getElementById("role").textContent = "No data";
+              document.getElementById("contact").textContent = "No data";
+              document.getElementById("profilePicture").src =
+                "TS_librarian.png";
+            });
+        } else {
+          // No ID in localStorage
+          document.getElementById("fullName").textContent = "No data";
+          document.getElementById("email").textContent = "No data";
+          document.getElementById("username").textContent = "No data";
+          document.getElementById("role").textContent = "No data";
+          document.getElementById("contact").textContent = "No data";
+          document.getElementById("profilePicture").src = "TS_librarian.png";
+        }
+      </script>
+    </div>
+  </body>
+</html>

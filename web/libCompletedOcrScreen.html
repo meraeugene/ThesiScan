@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Completed OCR Scans</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
+    />
+    <link rel="stylesheet" href="css/libCompletedOcrScreen.css" />
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/notyf@3/notyf.min.css"
+    />
+  </head>
+  <body>
+    <!-- Sidebar -->
+    <div class="sidebar">
+      <div class="logo">
+        <img src="images/sub logo.png" alt="Logo" />
+        <span class="logo-text">ThesiScan</span>
+      </div>
+
+      <nav class="nav-links">
+        <a href="librarianDashboard.html">
+          <i class="fas fa-home"></i>
+          <span class="link-text">Home</span>
+        </a>
+        <a href="libViewProfScreen.html">
+          <i class="fas fa-user"></i>
+          <span class="link-text">Profile</span>
+          <a href="libBookReportScreen.html">
+            <i class="fas fa-book"></i>
+            <span class="link-text">Book Reports</span>
+          </a>
+        </a>
+        <a href="libAccSettScreen.html">
+          <i class="fas fa-cog"></i>
+          <span class="link-text">Settings</span>
+        </a>
+      </nav>
+
+      <div class="logout-link">
+        <a href="#" onclick="logout()">
+          <i class="fas fa-sign-out-alt"></i>
+          <span class="link-text">Logout</span>
+        </a>
+      </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+      <div class="top-bar">
+        <h2>Completed OCR Scans</h2>
+        <form>
+          <input type="text" placeholder="Search scanned theses..." />
+          <button type="submit" class="search-btn">Search</button>
+        </form>
+      </div>
+
+      <div class="stats">
+        <div class="stat-box">
+          <h3>0</h3>
+          <p>Total Scans Completed</p>
+        </div>
+        <div class="stat-box">
+          <h3>0%</h3>
+          <p>Average Accuracy</p>
+        </div>
+        <div class="stat-box">
+          <h3>0</h3>
+          <p>Scans This Week</p>
+        </div>
+      </div>
+
+      <div class="uploads-section">
+        <h3>Scans Completed</h3>
+        <div class="table-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th>Thesis Title</th>
+                <th>Author</th>
+                <th>Date Scanned</th>
+                <th>Program</th>
+                <th>OCR Accuracy</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+        <div class="pagination" id="pagination"></div>
+      </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/notyf@3/notyf.min.js"></script>
+    <script>
+      const token = localStorage.getItem("token");
+
+      if (!token) {
+        window.location.href = "./";
+      }
+
+      function logout() {
+        localStorage.removeItem("token");
+        localStorage.removeItem("librarianId");
+        window.location.href = "index.html"; // send back to role selection
+      }
+
+      let data = [];
+      const rowsPerPage = 3;
+      let currentPage = 1;
+      let filteredData = [];
+
+      // Initialize Notyf
+      const notyf = new Notyf();
+
+      document.addEventListener("DOMContentLoaded", () => {
+        data = JSON.parse(localStorage.getItem("ocr_scans") || "[]");
+        filteredData = data;
+        updateStats();
+        renderTable();
+
+        const searchInput = document.querySelector(
+          ".top-bar input[type='text']"
+        );
+        searchInput.addEventListener("input", (e) => {
+          const query = e.target.value.toLowerCase().trim();
+          filteredData = data.filter(
+            (item) =>
+              (item.title && item.title.toLowerCase().includes(query)) ||
+              (item.author && item.author.toLowerCase().includes(query)) ||
+              (item.program && item.program.toLowerCase().includes(query))
+          );
+          currentPage = 1;
+          renderTable(query);
+        });
+
+        // Prevent form submit
+        const form = document.querySelector(".top-bar form");
+        form.addEventListener("submit", (e) => e.preventDefault());
+      });
+
+      function updateStats() {
+        const totalScans = data.length;
+        let avgAccuracy = 0;
+        if (data.length > 0) {
+          const sumAccuracy = data.reduce((sum, item) => {
+            if (Array.isArray(item.accuracy)) {
+              const avgItem =
+                item.accuracy.reduce((s, a) => s + a, 0) / item.accuracy.length;
+              return sum + avgItem;
+            } else {
+              return sum + parseFloat(item.accuracy.replace("%", "")) || 0;
+            }
+          }, 0);
+          avgAccuracy = (sumAccuracy / data.length).toFixed(2);
+        }
+
+        const oneWeekAgo = new Date();
+        oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+        const scansThisWeek = data.filter(
+          (item) => new Date(item.scanned_at) >= oneWeekAgo
+        ).length;
+
+        const statBoxes = document.querySelectorAll(".stats .stat-box");
+        statBoxes[0].querySelector("h3").textContent = totalScans;
+        statBoxes[1].querySelector("h3").textContent = avgAccuracy + "%";
+        statBoxes[2].querySelector("h3").textContent = scansThisWeek;
+      }
+
+      function highlight(text, query) {
+        if (!query) return text;
+        const regex = new RegExp(
+          `(${query.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")})`,
+          "gi"
+        );
+        return text.replace(regex, `<mark>$1</mark>`);
+      }
+
+      function renderTable(searchQuery = "") {
+        const tbody = document.querySelector("table tbody");
+        tbody.innerHTML = "";
+
+        const start = (currentPage - 1) * rowsPerPage;
+        const pageData = filteredData.slice(start, start + rowsPerPage);
+
+        if (pageData.length === 0) {
+          tbody.innerHTML = `
+        <tr>
+          <td colspan="5" style="text-align:center; color:#666;">No results found</td>
+        </tr>
+      `;
+          renderPagination();
+          return;
+        }
+
+        pageData.forEach((item) => {
+          let accuracyDisplay;
+          if (Array.isArray(item.accuracy)) {
+            const avg =
+              item.accuracy.reduce((s, a) => s + a, 0) / item.accuracy.length;
+            accuracyDisplay = avg.toFixed(2) + "%";
+          } else {
+            accuracyDisplay = item.accuracy;
+          }
+
+          const row = document.createElement("tr");
+          row.innerHTML = `
+        <td><a href="libThesisDets.html?thesis_id=${
+          item.thesis_id
+        }" class="book-link">${highlight(item.title, searchQuery)}</a></td>
+        <td>${highlight(item.author, searchQuery)}</td>
+        <td>${item.scanned_at}</td>
+        <td>${highlight(item.program, searchQuery)}</td>
+        <td>${accuracyDisplay}</td>
+      `;
+          tbody.appendChild(row);
+        });
+
+        renderPagination();
+      }
+
+      function renderPagination() {
+        const totalPages = Math.ceil(filteredData.length / rowsPerPage);
+        const pagination = document.getElementById("pagination");
+        pagination.innerHTML = "";
+
+        const prevBtn = document.createElement("button");
+        prevBtn.textContent = "Previous";
+        prevBtn.disabled = currentPage === 1;
+        prevBtn.className = "page-btn";
+        prevBtn.onclick = () => {
+          currentPage--;
+          renderTable(
+            document
+              .querySelector(".top-bar input[type='text']")
+              .value.toLowerCase()
+          );
+        };
+        pagination.appendChild(prevBtn);
+
+        for (let i = 1; i <= totalPages; i++) {
+          const btn = document.createElement("button");
+          btn.textContent = i;
+          btn.className = `page-btn ${i === currentPage ? "active" : ""}`;
+          btn.onclick = () => {
+            currentPage = i;
+            renderTable(
+              document
+                .querySelector(".top-bar input[type='text']")
+                .value.toLowerCase()
+            );
+          };
+          pagination.appendChild(btn);
+        }
+
+        const nextBtn = document.createElement("button");
+        nextBtn.textContent = "Next";
+        nextBtn.disabled = currentPage === totalPages;
+        nextBtn.className = "page-btn";
+        nextBtn.onclick = () => {
+          currentPage++;
+          renderTable(
+            document
+              .querySelector(".top-bar input[type='text']")
+              .value.toLowerCase()
+          );
+        };
+        pagination.appendChild(nextBtn);
+      }
+
+      function addScan(scan) {
+        data.push(scan);
+        localStorage.setItem("ocr_scans", JSON.stringify(data));
+        filteredData = data;
+        updateStats();
+        renderTable(
+          document
+            .querySelector(".top-bar input[type='text']")
+            .value.toLowerCase()
+        );
+      }
+    </script>
+  </body>
+</html>

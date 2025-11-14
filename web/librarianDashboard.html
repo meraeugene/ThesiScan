@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Librarian Dashboard - ThesiScan</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
+    />
+    <link rel="stylesheet" href="css/librarianDashboard.css" />
+  </head>
+  <body>
+    <!-- Sidebar -->
+    <div class="sidebar">
+      <div class="logo">
+        <img src="images/sub logo.png" alt="Logo" />
+        <span class="logo-text">ThesiScan</span>
+      </div>
+
+      <nav class="nav-links">
+        <a href="librarianDashboard.html">
+          <i class="fas fa-home"></i>
+          <span class="link-text">Home</span>
+        </a>
+        <a href="libViewProfScreen.html">
+          <i class="fas fa-user"></i>
+          <span class="link-text">Profile</span>
+          <a href="libBookReportScreen.html">
+            <i class="fas fa-book"></i>
+            <span class="link-text">Book Reports</span>
+          </a>
+        </a>
+        <a href="libAccSettScreen.html">
+          <i class="fas fa-cog"></i>
+          <span class="link-text">Settings</span>
+        </a>
+      </nav>
+
+      <div class="logout-link">
+        <a href="#" onclick="logout()">
+          <i class="fas fa-sign-out-alt"></i>
+          <span class="link-text">Logout</span>
+        </a>
+      </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+      <div class="dashboard-header">
+        <div class="welcome">
+          Welcome, <span id="librarianName">Admin!</span>
+        </div>
+        <button
+          class="upload-button"
+          onclick="window.location.href='libPreview.html'"
+        >
+          Upload Thesis
+        </button>
+      </div>
+
+      <div class="stats">
+        <a href="libTotalThesesScreen.html" class="stat-link">
+          <div class="stat-box">
+            <strong id="totalTheses">225</strong>
+            Total Theses Uploaded
+          </div>
+        </a>
+        <a href="libCompletedOcrScreen.html" class="stat-link">
+          <div class="stat-box">
+            <strong id="completedOcrScans">0</strong>
+            Completed OCR Scans
+          </div>
+        </a>
+
+        <a href="libTotalUserScreen.html" class="stat-link">
+          <div class="stat-box">
+            <strong id="totalUsers">358</strong>
+            Total Users
+          </div>
+        </a>
+      </div>
+
+      <div class="uploads-section">
+        <h3>Recent Uploads</h3>
+        <div class="table-wrapper">
+          <table class="styled-table">
+            <thead>
+              <tr>
+                <th>Thesis Title</th>
+                <th>Author</th>
+                <th>Program</th>
+                <th>Year</th>
+              </tr>
+            </thead>
+            <tbody id="recentUploadsTable">
+              <tr>
+                <td>
+                  <a href="#" class="book-link">Smart Campus IoT Framework</a>
+                </td>
+                <td>Juan Dela Cruz</td>
+                <td>BSIT</td>
+                <td>2024</td>
+              </tr>
+              <tr>
+                <td>
+                  <a href="#" class="book-link">AI Chatbots in Education</a>
+                </td>
+                <td>Maria Santos</td>
+                <td>BSCS</td>
+                <td>2023</td>
+              </tr>
+              <tr>
+                <td>
+                  <a href="#" class="book-link">Data Privacy in Schools</a>
+                </td>
+                <td>Carlos Reyes</td>
+                <td>BSIT</td>
+                <td>2022</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      const token = localStorage.getItem("token");
+
+      if (!token) {
+        window.location.href = "./";
+      }
+
+      function logout() {
+        localStorage.removeItem("token");
+        localStorage.removeItem("librarianId");
+        window.location.href = "index.html"; // send back to role selection
+      }
+
+      function updateCompletedOcrScans() {
+        const scans = JSON.parse(localStorage.getItem("ocr_scans") || "[]");
+        const count = scans.length;
+        const completedStatLink = document.querySelector(
+          '.stat-link[href="libCompletedOcrScreen.html"]'
+        );
+
+        document.getElementById("completedOcrScans").textContent = count;
+
+        if (count === 0) {
+          // Disable click
+          completedStatLink.style.pointerEvents = "none";
+          completedStatLink.style.opacity = "0.5"; // visually indicate disabled
+          completedStatLink.style.cursor = "default";
+        } else {
+          completedStatLink.style.pointerEvents = "auto";
+          completedStatLink.style.opacity = "1";
+          completedStatLink.style.cursor = "pointer";
+        }
+      }
+
+      // Function to fetch and update dashboard stats
+      async function fetchDashboardStats() {
+        try {
+          const response = await fetch("http://127.0.0.1:8000/reports/stats/");
+          if (!response.ok) {
+            throw new Error("Failed to fetch stats");
+          }
+          const data = await response.json();
+
+          if (data.total_theses !== undefined) {
+            document.getElementById("totalTheses").textContent =
+              data.total_theses;
+          }
+          if (data.total_users !== undefined) {
+            document.getElementById("totalUsers").textContent =
+              data.total_users;
+          }
+        } catch (error) {
+          console.error("Error fetching stats:", error);
+        }
+      }
+
+      // Function to fetch and update recent uploads
+      async function fetchRecentUploads() {
+        const tableBody = document.getElementById("recentUploadsTable");
+
+        try {
+          // Show loading state
+          tableBody.innerHTML =
+            '<tr><td colspan="4" style="text-align: center;">Loading recent uploads...</td></tr>';
+
+          // Fetch theses
+          const response = await fetch("http://127.0.0.1:8000/theses");
+
+          if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+          }
+
+          const theses = await response.json();
+
+          if (!Array.isArray(theses)) {
+            throw new Error(
+              "Expected array of theses but got: " + typeof theses
+            );
+          }
+
+          // Handle empty case
+          if (theses.length === 0) {
+            tableBody.innerHTML =
+              '<tr><td colspan="4" style="text-align: center;">No theses available</td></tr>';
+            return;
+          }
+
+          // Sort and take most recent 6
+          const recentTheses = theses.sort((a, b) => b.id - a.id).slice(0, 6);
+
+          // Build table rows
+          const rows = recentTheses
+            .map(
+              (thesis) => `
+            <tr>
+              <td>
+                <a href="libThesisDets.html?thesis_id=${
+                  thesis.id
+                }" class="book-link">
+                  ${thesis.title || "Untitled"}
+                </a>
+              </td>
+              <td>${thesis.authors || "Unknown"}</td>
+              <td>${thesis.program_course || "N/A"}</td>
+              <td>${
+                thesis.date_published
+                  ? new Date(thesis.date_published).getFullYear()
+                  : "N/A"
+              }</td>
+            </tr>
+          `
+            )
+            .join("");
+
+          // Update table
+          tableBody.innerHTML = rows;
+        } catch (error) {
+          console.error("Failed to fetch theses:", error);
+          tableBody.innerHTML = `
+            <tr>
+              <td colspan="4" style="text-align: center;">
+                <div style="color: #666; margin: 10px 0;">
+                  <i class="fas fa-exclamation-circle"></i> 
+                  Unable to load recent uploads
+                </div>
+                <button onclick="fetchRecentUploads()" 
+                        style="background: #0288d1; color: white; border: none; 
+                               padding: 5px 15px; border-radius: 4px; cursor: pointer;">
+                  Retry
+                </button>
+              </td>
+            </tr>
+          `;
+        }
+      }
+
+      // Load initial data
+      fetchDashboardStats();
+      fetchRecentUploads();
+      updateCompletedOcrScans();
+
+      // Set up periodic refresh
+      setInterval(() => {
+        fetchDashboardStats();
+        fetchRecentUploads();
+      }, 30000);
+    </script>
+  </body>
+</html>

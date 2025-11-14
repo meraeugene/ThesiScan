@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Web3 and the Future of Digital Campus</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
+    />
+    <link rel="stylesheet" href="css/studBookDets.css" />
+  </head>
+  <body>
+    <!-- Sidebar -->
+    <div class="sidebar">
+      <div class="logo">
+        <img src="images/sub logo.png" />
+        <span class="logo-text">ThesiScan</span>
+      </div>
+
+      <nav class="nav-links">
+        <a href="studentDashboard.html"
+          ><i class="fas fa-home"></i><span class="link-text">Home</span></a
+        >
+        <a href="studViewProfile.html"
+          ><i class="fas fa-user"></i><span class="link-text">Profile</span></a
+        >
+        <a href="studSearchAct.html"
+          ><i class="fas fa-search"></i
+          ><span class="link-text">Search Activity</span></a
+        >
+        <a href="studUsageSum.html"
+          ><i class="fas fa-chart-line"></i
+          ><span class="link-text">Usage Summary</span></a
+        >
+        <a href="studAccSetting.html"
+          ><i class="fas fa-cog"></i><span class="link-text">Settings</span></a
+        >
+      </nav>
+
+      <div class="logout-link">
+        <a href="#" onclick="logout()"
+          ><i class="fas fa-sign-out-alt"></i
+          ><span class="link-text">Logout</span></a
+        >
+      </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+      <div class="book-container" id="bookContainer">
+        <!-- Thesis details will be loaded here by JS -->
+      </div>
+    </div>
+
+    <script>
+      function parseJwt(token) {
+        try {
+          const base64Url = token.split(".")[1];
+          const base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
+          const jsonPayload = decodeURIComponent(
+            atob(base64)
+              .split("")
+              .map((c) => "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2))
+              .join("")
+          );
+          return JSON.parse(jsonPayload);
+        } catch {
+          return null;
+        }
+      }
+
+      const token = localStorage.getItem("token");
+      if (!token) window.location.href = "./";
+
+      // decode JWT to get student_id
+      const decoded = parseJwt(token);
+      const studentId = decoded?.student_id;
+      if (!studentId) {
+        localStorage.removeItem("token");
+        window.location.href = "index.html";
+      }
+
+      function logout() {
+        localStorage.removeItem("token");
+        window.location.href = "index.html";
+      }
+
+      // Get thesis ID from query string
+      const urlParams = new URLSearchParams(window.location.search);
+      const thesisId = Number(urlParams.get("thesis_id")) || 1;
+
+      async function loadThesis() {
+        const container = document.getElementById("bookContainer");
+
+        try {
+          // Fetch thesis details
+          const res = await fetch(`http://127.0.0.1:8000/theses/${thesisId}`, {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          if (!res.ok) throw new Error("Thesis not found");
+          const thesis = await res.json();
+
+          // Fetch bookmarks
+          let isBookmarked = false;
+          try {
+            const bookmarksRes = await fetch(
+              `http://127.0.0.1:8000/users/bookmarks/${studentId}`,
+              { headers: { Authorization: `Bearer ${token}` } }
+            );
+            if (bookmarksRes.ok) {
+              const bookmarks = await bookmarksRes.json();
+              isBookmarked = bookmarks.some((b) => b.thesis_id === thesis.id);
+            }
+          } catch (err) {
+            console.error("Error fetching bookmarks:", err);
+          }
+
+          // Render thesis details
+          container.innerHTML = `
+      <div class="book-header">
+        <div class="book-title">${thesis.title}</div>
+        <button class="bookmark-button${
+          isBookmarked ? " bookmarked" : ""
+        }" id="bookmarkButton">
+          <i class="fas ${isBookmarked ? "fa-bookmark" : "fa-bookmark-o"}"></i>
+          <span class="bookmark-text">${
+            isBookmarked ? "Bookmarked" : "Bookmark"
+          }</span>
+        </button>
+      </div>
+
+      <div class="info-card">
+        <p><strong>Author:</strong> ${thesis.authors}</p>
+        <p><strong>Program/Course:</strong> ${thesis.program_course}</p>
+        <p><strong>Date Published:</strong> ${new Date(
+          thesis.date_published
+        ).toLocaleDateString("en-US", {
+          month: "long",
+          day: "numeric",
+          year: "numeric",
+        })}</p>
+      </div>
+
+      ${
+        thesis.abstract
+          ? `
+        <div class="abstract-section">
+          <h3 class="abstract-title">Abstract</h3>
+          <div class="abstract-box">
+            <p class="abstract-text">${thesis.abstract}</p>
+            ${
+              thesis.keywords
+                ? `<p class="keywords"><strong>Keywords:</strong> ${thesis.keywords}</p>`
+                : ""
+            }
+          </div>
+        </div>
+      `
+          : ""
+      }
+    `;
+
+          // Record search history
+          fetch("http://127.0.0.1:8000/users/search-history/", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({
+              student_id: studentId,
+              thesis_id: thesis.id,
+              book_title: thesis.title,
+              author: thesis.authors,
+              date_accessed: new Date().toISOString().slice(0, 10),
+              access_location: "Online",
+            }),
+          }).catch((err) =>
+            console.error("Failed to record search history:", err)
+          );
+
+          // Bookmark toggle button
+          const bookmarkButton = document.getElementById("bookmarkButton");
+          const bookmarkText = bookmarkButton.querySelector(".bookmark-text");
+          const icon = bookmarkButton.querySelector("i");
+
+          bookmarkButton.addEventListener("click", async () => {
+            const nowBookmarked =
+              bookmarkButton.classList.contains("bookmarked");
+
+            try {
+              if (!nowBookmarked) {
+                // Add bookmark
+                const res = await fetch(
+                  "http://127.0.0.1:8000/users/bookmarks/",
+                  {
+                    method: "POST",
+                    headers: {
+                      "Content-Type": "application/json",
+                      Authorization: `Bearer ${token}`,
+                    },
+                    body: JSON.stringify({
+                      student_id: studentId,
+                      thesis_id: thesis.id,
+                      thesis_title: thesis.title,
+                      author: thesis.authors,
+                      program: thesis.program_course,
+                      date_bookmarked: new Date().toISOString().slice(0, 10),
+                    }),
+                  }
+                );
+                if (!res.ok) console.error("Failed to add bookmark");
+                console.log("Bookmark added successfully!");
+              } else {
+                // Remove bookmark
+                const res = await fetch(
+                  `http://127.0.0.1:8000/users/bookmarks/${studentId}/${thesis.id}`,
+                  {
+                    method: "DELETE",
+                    headers: { Authorization: `Bearer ${token}` },
+                  }
+                );
+                if (!res.ok) console.error("Failed to remove bookmark");
+                console.log("Bookmark removed successfully!");
+              }
+
+              // Toggle UI
+              bookmarkButton.classList.toggle("bookmarked");
+              const isNowBookmarked =
+                bookmarkButton.classList.contains("bookmarked");
+              icon.className = `fas ${
+                isNowBookmarked ? "fa-bookmark" : "fa-bookmark-o"
+              }`;
+              bookmarkText.textContent = isNowBookmarked
+                ? "Bookmarked"
+                : "Bookmark";
+            } catch (err) {
+              console.error(err);
+              alert(err.message);
+            }
+          });
+        } catch (err) {
+          container.innerHTML = `<div class="book-header"><div class="book-title">Error loading thesis: ${err}</div></div>`;
+          console.error(err);
+        }
+      }
+
+      window.onload = loadThesis;
+    </script>
+  </body>
+</html>

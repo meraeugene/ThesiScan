@@ -1,0 +1,253 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: "Segoe UI", sans-serif;
+}
+
+body {
+  background-color: #f5f5f5;
+  height: 100vh;
+  display: flex;
+}
+
+.sidebar {
+  width: 70px;
+  height: 100vh;
+  background-color: #ffffff;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  transition: width 0.3s ease;
+  border-right: 1px solid #ddd;
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 1000;
+  overflow: hidden;
+}
+
+.sidebar:hover {
+  width: 250px;
+  align-items: flex-start;
+}
+
+.sidebar .logo {
+  width: 100%;
+  height: 80px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+  transition: padding-left 0.3s ease, justify-content 0.3s ease;
+}
+
+.sidebar:hover .logo {
+  justify-content: flex-start;
+  padding-left: 20px;
+}
+
+.sidebar .logo img {
+  width: 42px;
+  height: 42px;
+  object-fit: contain;
+}
+
+.logo-text {
+  position: absolute;
+  left: 80px;
+  color: #0288d1;
+  font-weight: 600;
+  font-size: 18px;
+  white-space: nowrap;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+
+.sidebar:hover .logo-text {
+  opacity: 1;
+  visibility: visible;
+}
+
+.nav-links,
+.logout-link {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  align-items: center;
+  transition: all 0.3s ease;
+}
+
+.sidebar:hover .nav-links,
+.sidebar:hover .logout-link {
+  align-items: flex-start;
+  padding-left: 20px;
+}
+
+.sidebar a {
+  color: #0288d1;
+  font-weight: 600;
+  text-decoration: none;
+  margin: 8px 0;
+  display: flex;
+  align-items: center;
+  font-size: 18px;
+  padding: 10px;
+  border-radius: 8px;
+  width: calc(100% - 20px);
+  justify-content: flex-start;
+  transition: background 0.3s ease;
+}
+
+.sidebar a:hover {
+  background-color: #e1f5fe;
+}
+
+.sidebar a i {
+  font-size: 20px;
+  min-width: 25px;
+  text-align: center;
+  color: #0288d1;
+}
+
+.link-text {
+  margin-left: 15px;
+  white-space: nowrap;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+
+.sidebar:hover .link-text {
+  opacity: 1;
+  visibility: visible;
+}
+
+.main-content {
+  margin-left: 70px;
+  padding: 40px;
+  flex: 1;
+  transition: margin-left 0.3s ease;
+}
+
+.sidebar:hover ~ .main-content {
+  margin-left: 250px;
+}
+
+#historyTable th:nth-child(3),
+#historyTable th:nth-child(4) {
+  white-space: nowrap;
+}
+
+.page-title {
+  font-size: 26px;
+  font-weight: bold;
+  color: #0288d1;
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.activity-container {
+  max-width: 900px;
+  margin: 0 auto;
+  background-color: white;
+  padding: 30px;
+  border-radius: 12px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+.tabs {
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+  margin-bottom: 25px;
+}
+
+.tab-button {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 20px;
+  background-color: #e0e0e0;
+  cursor: pointer;
+  font-weight: bold;
+  color: #555;
+}
+
+.tab-button.active {
+  background-color: #0288d1;
+  color: white;
+}
+
+.tab-content {
+  display: none;
+}
+
+.tab-content.active {
+  display: block;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th,
+td {
+  padding: 12px 16px;
+  border-bottom: 1px solid #ddd;
+  text-align: left;
+}
+
+th {
+  background-color: #0288d1;
+  color: white;
+}
+
+tr:hover {
+  background-color: #f1f1f1;
+}
+
+.empty-message {
+  text-align: center;
+  color: #888;
+  margin-top: 20px;
+  font-style: italic;
+}
+/* Pagination styles */
+.pagination {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-top: 25px;
+  gap: 5px;
+}
+.pagination button {
+  padding: 5px 10px;
+  border: 1px solid #0288d1;
+  background-color: white;
+  color: #0288d1;
+  cursor: pointer;
+  border-radius: 4px;
+}
+.pagination button.active {
+  background-color: #0288d1;
+  color: white;
+}
+.pagination button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+@media (max-width: 768px) {
+  .sidebar {
+    position: fixed;
+    height: 100vh;
+    z-index: 999;
+  }
+
+  .main-content {
+    padding: 20px;
+  }
+}

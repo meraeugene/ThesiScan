@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Student Dashboard - ThesiScan</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
+    />
+    <link rel="stylesheet" href="css/studentDashboard.css" />
+  </head>
+  <body>
+    <!-- Sidebar -->
+    <div class="sidebar">
+      <div class="logo">
+        <img src="images/sub logo.png" />
+        <span class="logo-text">ThesiScan</span>
+      </div>
+
+      <nav class="nav-links">
+        <a href="studentDashboard.html"
+          ><i class="fas fa-home"></i><span class="link-text">Home</span></a
+        >
+        <a href="studViewProfile.html"
+          ><i class="fas fa-user"></i><span class="link-text">Profile</span></a
+        >
+        <a href="studSearchAct.html"
+          ><i class="fas fa-search"></i
+          ><span class="link-text">Search Activity</span></a
+        >
+        <a href="studUsageSum.html"
+          ><i class="fas fa-chart-line"></i
+          ><span class="link-text">Usage Summary</span></a
+        >
+        <a href="studAccSetting.html"
+          ><i class="fas fa-cog"></i><span class="link-text">Settings</span></a
+        >
+      </nav>
+
+      <div class="logout-link">
+        <a href="#" onclick="logout()"
+          ><i class="fas fa-sign-out-alt"></i
+          ><span class="link-text">Logout</span></a
+        >
+      </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+      <div class="dashboard-content">
+        <h1>
+          Welcome to
+          <img src="images/logo.png" alt="ThesiScan Logo" class="inline-logo" />
+        </h1>
+        <p>A Research Gateway for Students' Academic Exploration</p>
+
+        <!-- Search Bar -->
+        <div class="search-bar">
+          <input
+            id="searchInput"
+            type="text"
+            placeholder="Search thesis by title, author, or keyword..."
+          />
+          <button onclick="handleSearch()">Search</button>
+        </div>
+
+        <!-- Filter Section (Hidden Initially) -->
+        <div id="filterSection" class="filter-section">
+          <select id="programFilter">
+            <option value="">Select Program/Course</option>
+            <option value="BSIT">BSIT</option>
+            <option value="BSCS">BSCS</option>
+            <option value="BSECE">BSCE</option>
+          </select>
+          <select id="yearFilter">
+            <option value="">Year of Publication</option>
+            <option value="2025">2025</option>
+            <option value="2024">2024</option>
+            <option value="2023">2023</option>
+          </select>
+          <input id="tagFilter" type="text" placeholder="Tags / Keywords..." />
+        </div>
+      </div>
+    </div>
+
+    <script>
+      const token = localStorage.getItem("token");
+
+      if (!token) {
+        window.location.href = "./";
+      }
+
+      function logout() {
+        localStorage.removeItem("token");
+        localStorage.removeItem("studentId");
+        window.location.href = "index.html"; // send back to role selection
+      }
+
+      const searchInput = document.getElementById("searchInput");
+
+      function handleSearch() {
+        const keyword = document.getElementById("searchInput").value.trim();
+        const program = document.getElementById("programFilter").value || "All";
+        const year = document.getElementById("yearFilter").value || "Any";
+        const tags = document.getElementById("tagFilter").value.trim() || "Any";
+
+        const params = new URLSearchParams();
+        params.append("program", program);
+        params.append("year", year);
+        params.append("tags", tags);
+        params.append("q", keyword);
+
+        window.location.href = `studSearchResult.html?${params.toString()}`;
+      }
+    </script>
+  </body>
+</html>

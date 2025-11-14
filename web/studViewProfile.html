@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Student Profile - ThesiScan</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
+    />
+    <link rel="stylesheet" href="css/studViewProfile.css" />
+  </head>
+  <body>
+    <!-- Sidebar -->
+    <div class="sidebar">
+      <div class="logo">
+        <img src="images/sub logo.png" />
+        <span class="logo-text">ThesiScan</span>
+      </div>
+
+      <nav class="nav-links">
+        <a href="studentDashboard.html"
+          ><i class="fas fa-home"></i><span class="link-text">Home</span></a
+        >
+        <a href="studViewProfile.html"
+          ><i class="fas fa-user"></i><span class="link-text">Profile</span></a
+        >
+        <a href="studSearchAct.html"
+          ><i class="fas fa-search"></i
+          ><span class="link-text">Search Activity</span></a
+        >
+        <a href="studUsageSum.html"
+          ><i class="fas fa-chart-line"></i
+          ><span class="link-text">Usage Summary</span></a
+        >
+        <a href="studAccSetting.html"
+          ><i class="fas fa-cog"></i><span class="link-text">Settings</span></a
+        >
+      </nav>
+
+      <div class="logout-link">
+        <a href="#" onclick="logout()"
+          ><i class="fas fa-sign-out-alt"></i
+          ><span class="link-text">Logout</span></a
+        >
+      </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+      <h2 class="section-title">Student Profile</h2>
+
+      <div class="profile-container">
+        <img
+          src="TS_student.png"
+          alt="Profile Picture"
+          class="profile-picture"
+          id="profilePreview"
+        />
+
+        <div class="profile-info">
+          <div class="profile-row">
+            <label>Full Name:</label>
+            <span id="profileFullName"></span>
+          </div>
+          <div class="profile-row">
+            <label>Student ID:</label>
+            <span id="profileStudentId"></span>
+          </div>
+          <div class="profile-row">
+            <label>Program/Course:</label>
+            <span id="profileProgram"></span>
+          </div>
+          <div class="profile-row">
+            <label>Year Level:</label>
+            <span id="profileYear"></span>
+          </div>
+          <div class="profile-row">
+            <label>Email:</label>
+            <span id="profileEmail"></span>
+          </div>
+          <script>
+            const token = localStorage.getItem("token");
+            const studentId = localStorage.getItem("studentId");
+
+            if (!token) {
+              window.location.href = "./"; // redirect if not logged in
+            }
+
+            function logout() {
+              localStorage.removeItem("token");
+              localStorage.removeItem("studentId");
+              localStorage.removeItem("studentUser");
+              window.location.href = "index.html"; // send back to role selection
+            }
+
+            async function fetchUserProfile() {
+              try {
+                const response = await fetch(
+                  `http://127.0.0.1:8000/users/${studentId}`,
+                  {
+                    headers: {
+                      Authorization: `Bearer ${token}`,
+                    },
+                  }
+                );
+
+                if (!response.ok) {
+                  throw new Error("Failed to fetch user profile.");
+                }
+
+                const user = await response.json();
+
+                const profilePreview =
+                  document.getElementById("profilePreview");
+
+                function getYearLevelText(year) {
+                  const n = parseInt(year);
+                  if (!isNaN(n)) {
+                    if (n === 1) return "1st Year";
+                    if (n === 2) return "2nd Year";
+                    if (n === 3) return "3rd Year";
+                    return `${n}th Year`;
+                  }
+                  return year;
+                }
+
+                document.getElementById("profileFullName").textContent =
+                  user.full_name;
+                document.getElementById("profileStudentId").textContent =
+                  user.student_id;
+                document.getElementById("profileProgram").textContent =
+                  user.program_course;
+                document.getElementById("profileYear").textContent =
+                  getYearLevelText(user.year_level);
+                document.getElementById("profileEmail").textContent =
+                  user.email;
+
+                if (user.profile_picture) {
+                  profilePreview.src = user.profile_picture.startsWith(
+                    "/static/"
+                  )
+                    ? `http://127.0.0.1:8000${
+                        user.profile_picture
+                      }?t=${new Date().getTime()}`
+                    : user.profile_picture;
+                } else {
+                  profilePreview.src = "TS_student.png";
+                }
+              } catch (err) {
+                console.error(err);
+                alert("Failed to load profile. Please try again later.");
+              }
+            }
+
+            document.addEventListener("DOMContentLoaded", fetchUserProfile);
+          </script>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

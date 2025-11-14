@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Thesis Details - ThesiScan</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/notyf@3/notyf.min.css"
+    />
+    <link rel="stylesheet" href="css/libThesisDets.css" />
+  </head>
+  <body>
+    <!-- Sidebar -->
+    <div class="sidebar">
+      <div class="logo">
+        <img src="images/sub logo.png" alt="Logo" />
+        <span class="logo-text">ThesiScan</span>
+      </div>
+
+      <nav class="nav-links">
+        <a href="librarianDashboard.html">
+          <i class="fas fa-home"></i>
+          <span class="link-text">Home</span>
+        </a>
+        <a href="libViewProfScreen.html">
+          <i class="fas fa-user"></i>
+          <span class="link-text">Profile</span>
+        </a>
+        <a href="libBookReportScreen.html">
+          <i class="fas fa-book"></i>
+          <span class="link-text">Book Reports</span>
+        </a>
+        <a href="libAccSettScreen.html">
+          <i class="fas fa-cog"></i>
+          <span class="link-text">Settings</span>
+        </a>
+      </nav>
+
+      <div class="logout-link">
+        <a href="#" onclick="logout()">
+          <i class="fas fa-sign-out-alt"></i>
+          <span class="link-text">Logout</span>
+        </a>
+      </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+      <div class="book-container" id="bookContainer">
+        <!-- Content will be loaded dynamically -->
+        <div style="text-align: center; padding: 20px">
+          <i
+            class="fas fa-spinner fa-spin"
+            style="font-size: 24px; color: #0288d1"
+          ></i>
+          <p>Loading thesis details...</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Edit Modal -->
+    <div id="editModal" class="modal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2>Edit Thesis</h2>
+          <span class="close">&times;</span>
+        </div>
+        <form id="editForm">
+          <div class="form-group">
+            <label for="title">Title</label>
+            <input type="text" id="title" name="title" required />
+          </div>
+          <div class="form-group">
+            <label for="authors">Author/s</label>
+            <input type="text" id="authors" name="authors" required />
+          </div>
+          <div class="form-group">
+            <label for="program_course">Program/Course</label>
+            <input
+              type="text"
+              id="program_course"
+              name="program_course"
+              required
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="abstract">Abstract</label>
+            <textarea id="abstract" name="abstract"></textarea>
+          </div>
+          <div class="form-group">
+            <label for="keywords">Keywords</label>
+            <textarea id="keywords" name="keywords"></textarea>
+          </div>
+          <div class="form-group">
+            <label for="date_published">Date Published</label>
+            <input
+              type="date"
+              id="date_published"
+              name="date_published"
+              required
+            />
+          </div>
+
+          <button type="submit" class="save-btn">Save Changes</button>
+        </form>
+      </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/notyf@3/notyf.min.js"></script>
+    <script>
+      const token = localStorage.getItem("token");
+
+      if (!token) {
+        window.location.href = "./";
+      }
+
+      function logout() {
+        localStorage.removeItem("token");
+        localStorage.removeItem("librarianId");
+        window.location.href = "index.html"; // send back to role selection
+      }
+
+      // Initialize Notyf
+      const notyf = new Notyf();
+
+      // Get thesis ID from query string
+      const urlParams = new URLSearchParams(window.location.search);
+      const thesisId = urlParams.get("thesis_id");
+      let currentThesis = null;
+
+      // Get modal elements
+      const modal = document.getElementById("editModal");
+      const closeBtn = document.getElementsByClassName("close")[0];
+      const editForm = document.getElementById("editForm");
+
+      async function loadThesis() {
+        const container = document.getElementById("bookContainer");
+
+        try {
+          const response = await fetch(
+            `http://127.0.0.1:8000/theses/${thesisId}`
+          );
+          if (!response.ok) {
+            throw new Error("Failed to fetch thesis");
+          }
+
+          const thesis = await response.json();
+          currentThesis = thesis;
+
+          if (!thesis || !thesis.title) {
+            throw new Error("Invalid thesis data");
+          }
+
+          container.innerHTML = `
+            <div class="book-header">
+              <div class="book-title">${thesis.title}</div>
+              <div class="button-group">
+                <button class="edit-button" onclick="editThesis(${thesis.id})">
+                  <i class="fas fa-edit"></i> Edit
+                </button>
+                <button class="delete-button" onclick="confirmDelete(${
+                  thesis.id
+                })">
+                  <i class="fas fa-trash"></i> Delete
+                </button>
+              </div>
+            </div>
+
+            <div class="info-card">
+              <p><strong>Authors:</strong> ${thesis.authors}</p>
+              <p><strong>Program/Course:</strong> ${thesis.program_course}</p>
+             <p><strong>Date Published:</strong> ${new Date(
+               thesis.date_published
+             ).toLocaleDateString("en-US", {
+               month: "long",
+               year: "numeric",
+             })}</p>
+
+            
+            </div>
+
+            ${
+              thesis.abstract
+                ? `
+              <div class="abstract">
+                <div class="abstract-title">Abstract</div>
+                <p>${thesis.abstract}</p>
+              </div>
+            `
+                : ""
+            }
+
+            ${
+              thesis.keywords
+                ? `
+              <div class="keywords">
+                <span class="label">Keywords:</span> ${thesis.keywords}
+              </div>
+            `
+                : ""
+            }
+          `;
+        } catch (error) {
+          console.error("Error:", error);
+          container.innerHTML = `
+            <div style="text-align: center; padding: 20px;">
+              <i class="fas fa-exclamation-circle" style="font-size: 24px; color: #dc3545;"></i>
+              <p style="color: #dc3545; margin-top: 10px;">Error loading thesis details</p>
+              <button onclick="loadThesis()" class="edit-button" style="margin-top: 10px;">
+                Try Again
+              </button>
+            </div>
+          `;
+        }
+      }
+
+      function editThesis(thesisId) {
+        // Populate form with current thesis data
+        document.getElementById("title").value = currentThesis.title;
+        document.getElementById("authors").value = currentThesis.authors;
+        document.getElementById("program_course").value =
+          currentThesis.program_course;
+        document.getElementById("date_published").value =
+          currentThesis.date_published
+            ? new Date(currentThesis.date_published).toISOString().split("T")[0]
+            : "";
+
+        document.getElementById("abstract").value =
+          currentThesis.abstract || "";
+        document.getElementById("keywords").value =
+          currentThesis.keywords || "";
+
+        // Show modal
+        modal.style.display = "block";
+      }
+
+      // Close modal when clicking (x)
+      closeBtn.onclick = function () {
+        modal.style.display = "none";
+      };
+
+      // Close modal when clicking outside
+      window.onclick = function (event) {
+        if (event.target == modal) {
+          modal.style.display = "none";
+        }
+      };
+
+      // Handle form submission
+      editForm.onsubmit = async function (e) {
+        e.preventDefault();
+
+        const formData = {
+          title: document.getElementById("title").value,
+          authors: document.getElementById("authors").value,
+          program_course: document.getElementById("program_course").value,
+          date_published: document.getElementById("date_published").value,
+          abstract: document.getElementById("abstract").value || null,
+          keywords: document.getElementById("keywords").value || null,
+        };
+
+        try {
+          const response = await fetch(
+            `http://127.0.0.1:8000/theses/${thesisId}`,
+            {
+              method: "PUT",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify(formData),
+            }
+          );
+
+          if (!response.ok) {
+            throw new Error("Failed to update thesis");
+          }
+
+          // Close modal and reload thesis data
+          modal.style.display = "none";
+          await loadThesis();
+          notyf.success("Thesis updated successfully");
+        } catch (error) {
+          console.error("Error updating thesis:", error);
+          notyf.error("Error updating thesis. Please try again.");
+        }
+      };
+
+      function confirmDelete(thesisId) {
+        if (
+          confirm(
+            "Are you sure you want to delete this thesis? This action cannot be undone."
+          )
+        ) {
+          deleteThesis(thesisId);
+        }
+      }
+
+      async function deleteThesis(thesisId) {
+        try {
+          const response = await fetch(
+            `http://127.0.0.1:8000/theses/${thesisId}`,
+            {
+              method: "DELETE",
+            }
+          );
+
+          if (!response.ok) {
+            throw new Error("Failed to delete thesis");
+          }
+
+          // Delete associated OCR scans from localStorage
+          const ocrScans = JSON.parse(
+            localStorage.getItem("ocr_scans") || "[]"
+          );
+          const updatedScans = ocrScans.filter(
+            (scan) => scan.thesis_id !== thesisId
+          );
+          localStorage.setItem("ocr_scans", JSON.stringify(updatedScans));
+          console.log("Associated OCR scans removed from localStorage");
+
+          notyf.success("Thesis deleted successfully");
+          window.location.href = "libTotalThesesScreen.html";
+        } catch (error) {
+          console.error("Error:", error);
+          notyf.error("Failed to delete thesis. Please try again.");
+        }
+      }
+
+      // Load thesis data when page loads
+      window.onload = loadThesis;
+    </script>
+  </body>
+</html>

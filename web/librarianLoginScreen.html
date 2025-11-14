@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>ThesiScan</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="css/librarianLoginScreen.css" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/notyf@3/notyf.min.css"
+    />
+    <style>
+      html,
+      body {
+        height: 100%;
+        font-family: "Segoe UI", sans-serif;
+        position: relative;
+        background: url("TS_bg.jpg") no-repeat center center;
+        background-size: cover;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Logo -->
+    <img src="images/main logo.png" alt="ThesiScan Logo" class="logo" />
+
+    <!-- Login Box -->
+    <div class="login-box">
+      <h2>Librarian Login</h2>
+      <form id="librarianLoginForm">
+        <input
+          type="text"
+          id="username"
+          placeholder="Username"
+          required
+          autocomplete="username"
+        />
+        <div class="input-group">
+          <input
+            type="password"
+            id="password"
+            placeholder="Password"
+            required
+            autocomplete="current-password"
+          />
+          <button
+            type="button"
+            class="toggle-password"
+            onclick="togglePassword()"
+          >
+            <i id="eyeIcon" class="fa-solid fa-eye"></i>
+          </button>
+        </div>
+
+        <button type="submit" class="login-button">Login</button>
+      </form>
+      <a href="./" class="back-link">← Back to role selection</a>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/notyf@3/notyf.min.js"></script>
+    <script>
+      const notyf = new Notyf();
+
+      function togglePassword() {
+        const passwordField = document.getElementById("password");
+        const eyeIcon = document.getElementById("eyeIcon");
+        const isHidden = passwordField.type === "password";
+
+        passwordField.type = isHidden ? "text" : "password";
+        eyeIcon.classList.toggle("fa-eye");
+        eyeIcon.classList.toggle("fa-eye-slash");
+      }
+
+      document
+        .getElementById("librarianLoginForm")
+        .addEventListener("submit", async function (event) {
+          event.preventDefault();
+          const username = document.getElementById("username").value;
+          const password = document.getElementById("password").value;
+
+          const formData = new FormData();
+          formData.append("username", username);
+          formData.append("password", password);
+          try {
+            const response = await fetch(
+              "http://127.0.0.1:8000/librarian/login/",
+              {
+                method: "POST",
+                body: formData,
+              }
+            );
+            if (response.ok) {
+              const data = await response.json();
+              localStorage.setItem("token", data.token);
+              localStorage.setItem("librarianId", data.id);
+
+              window.location.href = "librarianDashboard.html";
+            } else {
+              notyf.error("These credentials do not match our records.");
+            }
+          } catch (err) {
+            notyf.error("Network error. Please try again later.");
+          }
+        });
+    </script>
+  </body>
+</html>

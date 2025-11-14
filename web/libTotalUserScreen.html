@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Total Users</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
+    />
+    <link rel="stylesheet" href="css/libTotalUserScreen.css" />
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/notyf@3/notyf.min.css"
+    />
+  </head>
+  <body>
+    <!-- Sidebar -->
+    <div class="sidebar">
+      <div class="logo">
+        <img src="images/sub logo.png" alt="Logo" />
+        <span class="logo-text">ThesiScan</span>
+      </div>
+      <nav class="nav-links">
+        <a href="librarianDashboard.html"
+          ><i class="fas fa-home"></i><span class="link-text">Home</span></a
+        >
+        <a href="libViewProfScreen.html"
+          ><i class="fas fa-user"></i><span class="link-text">Profile</span></a
+        >
+        <a href="libBookReportScreen.html"
+          ><i class="fas fa-book"></i
+          ><span class="link-text">Book Reports</span></a
+        >
+        <a href="libAccSettScreen.html"
+          ><i class="fas fa-cog"></i><span class="link-text">Settings</span></a
+        >
+      </nav>
+      <div class="logout-link">
+        <a href="#" onclick="logout()"
+          ><i class="fas fa-sign-out-alt"></i
+          ><span class="link-text">Logout</span></a
+        >
+      </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+      <div class="top-bar">
+        <h3 class="page-title">Total Users</h3>
+        <div class="search-bar">
+          <input type="text" placeholder="Search users by ID, Name..." />
+          <button type="submit">Search</button>
+        </div>
+        <button id="addUserBtn" class="add-btn">+ Add User</button>
+      </div>
+
+      <div class="stats">
+        <div class="stat-box">
+          <h3>420</h3>
+          <p>Total Users</p>
+        </div>
+        <div class="stat-box">
+          <h3>128</h3>
+          <p>Active This Week</p>
+        </div>
+        <div class="stat-box">
+          <h3>25</h3>
+          <p>New Users</p>
+        </div>
+      </div>
+
+      <div class="table-section">
+        <h3>Users</h3>
+        <div class="table-wrapper">
+          <table id="userTable">
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Student ID</th>
+                <th>Program</th>
+                <th>Year Level</th>
+                <th>Last Login</th>
+                <th class="actions-column">Actions</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+        <div class="pagination" id="pagination"></div>
+      </div>
+    </div>
+
+    <!-- Add User Modal -->
+    <div id="addUserModal" class="modal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2>Add New User</h2>
+          <span class="close">&times;</span>
+        </div>
+        <form id="addUserForm">
+          <div class="form-group">
+            <label for="full_name">Full Name</label>
+            <input type="text" id="full_name" name="full_name" required />
+          </div>
+          <div class="form-group">
+            <label for="student_id">Student ID</label>
+            <input type="text" id="student_id" name="student_id" required />
+          </div>
+          <div class="form-group">
+            <label for="program_course">Program/Course</label>
+            <input
+              type="text"
+              id="program_course"
+              name="program_course"
+              required
+            />
+          </div>
+          <div class="form-group">
+            <label for="year_level">Year Level</label>
+            <input type="text" id="year_level" name="year_level" required />
+          </div>
+          <div class="form-group">
+            <label for="email">Email</label>
+            <input
+              type="email"
+              id="email"
+              name="email"
+              required
+              autocomplete="username"
+            />
+          </div>
+          <div class="form-group">
+            <label for="password">Password</label>
+            <input
+              type="password"
+              id="password"
+              name="password"
+              required
+              autocomplete="current-password"
+            />
+          </div>
+          <button type="submit" class="save-btn">Create User</button>
+        </form>
+      </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/notyf@3/notyf.min.js"></script>
+    <script>
+      const notyf = new Notyf();
+
+      const token = localStorage.getItem("token");
+
+      if (!token) {
+        window.location.href = "./";
+      }
+
+      function logout() {
+        localStorage.removeItem("token");
+        localStorage.removeItem("librarianId");
+        window.location.href = "index.html"; // send back to role selection
+      }
+
+      document.addEventListener("DOMContentLoaded", async () => {
+        // Fetch user statistics
+        async function fetchStats() {
+          try {
+            const response = await fetch(
+              "http://localhost:8000/reports/stats/"
+            );
+            const data = await response.json();
+
+            // Update statistics boxes
+            document.querySelector(".stats").innerHTML = `
+              <div class="stat-box">
+                <h3>${data.total_users}</h3>
+                <p>Total Users</p>
+              </div>
+              <div class="stat-box">
+                <h3>${data.active_users_this_week || 0}</h3>
+                <p>Active This Week</p>
+              </div>
+              <div class="stat-box">
+                <h3>${data.new_users_this_month || 0}</h3>
+                <p>New Users This Month</p>
+              </div>
+            `;
+          } catch (error) {
+            console.error("Error fetching stats:", error);
+          }
+        }
+
+        // Fetch users data
+        async function fetchUsers() {
+          try {
+            const response = await fetch("http://localhost:8000/users/list/");
+            const users = await response.json();
+            updateUserTable(users);
+          } catch (error) {
+            console.error("Error fetching users:", error);
+          }
+        }
+
+        function getTimeAgo(date) {
+          const now = new Date();
+          const loginDate = new Date(date);
+          const diffInMinutes = Math.floor((now - loginDate) / (1000 * 60));
+
+          if (diffInMinutes < 60) {
+            return `${diffInMinutes} min ago`;
+          }
+
+          const diffInHours = Math.floor(diffInMinutes / 60);
+          if (diffInHours < 24) {
+            return `${diffInHours} hour${diffInHours > 1 ? "s" : ""} ago`;
+          }
+
+          const diffInDays = Math.floor(diffInHours / 24);
+          return `${diffInDays} day${diffInDays > 1 ? "s" : ""} ago`;
+        }
+
+        function updateUserTable(users) {
+          const tbody = document.querySelector("#userTable tbody");
+          tbody.innerHTML = "";
+
+          users.forEach((user) => {
+            const row = document.createElement("tr");
+
+            // Row click navigates to profile
+            row.onclick = (e) => {
+              if (!e.target.classList.contains("delete-btn")) {
+                window.location.href = `libUserProf1.html?id=${user.id}`;
+              }
+            };
+
+            const timeAgo = user.last_login
+              ? getTimeAgo(user.last_login)
+              : "Never";
+
+            row.innerHTML = `
+      <td>${user.full_name}</td>
+      <td>${user.student_id}</td>
+      <td>${user.program_course}</td>
+      <td>${user.year_level}</td>
+      <td>${timeAgo}</td>
+      <td>
+        <button class="delete-btn" data-id="${user.id}">Delete</button>
+      </td>
+    `;
+
+            tbody.appendChild(row);
+          });
+
+          // Attach delete handlers
+          document.querySelectorAll(".delete-btn").forEach((btn) => {
+            btn.addEventListener("click", async (e) => {
+              e.stopPropagation(); // prevent row click
+              const userId = btn.dataset.id;
+              if (confirm("Are you sure you want to delete this user?")) {
+                try {
+                  const res = await fetch(
+                    `http://localhost:8000/users/${userId}`,
+                    {
+                      method: "DELETE",
+                      headers: { Authorization: `Bearer ${token}` },
+                    }
+                  );
+                  if (!res.ok) throw new Error("Failed to delete user");
+                  notyf.success("User deleted successfully!");
+                  await fetchUsers(); // reload table
+                } catch (err) {
+                  console.error(err);
+                  notyf.error("Error deleting user.");
+                }
+              }
+            });
+          });
+
+          setupPagination();
+        }
+
+        function setupPagination() {
+          const rowsPerPage = 4;
+          const table = document.getElementById("userTable");
+          const tbody = table.querySelector("tbody");
+          const rows = Array.from(tbody.querySelectorAll("tr"));
+          const pagination = document.getElementById("pagination");
+          let currentPage = 1;
+          const totalPages = Math.ceil(rows.length / rowsPerPage);
+
+          function displayPage(page) {
+            const start = (page - 1) * rowsPerPage;
+            const end = start + rowsPerPage;
+            rows.forEach((row, i) => {
+              row.style.display = i >= start && i < end ? "" : "none";
+            });
+            renderPagination(page);
+          }
+
+          function renderPagination(current) {
+            pagination.innerHTML = "";
+
+            const prevBtn = document.createElement("button");
+            prevBtn.textContent = "Previous";
+            prevBtn.disabled = current === 1;
+            prevBtn.className = "page-btn";
+            prevBtn.addEventListener("click", () => {
+              if (currentPage > 1) {
+                currentPage--;
+                displayPage(currentPage);
+              }
+            });
+            pagination.appendChild(prevBtn);
+
+            for (let i = 1; i <= totalPages; i++) {
+              const btn = document.createElement("button");
+              btn.textContent = i;
+              btn.className = "page-btn" + (i === current ? " active" : "");
+              btn.addEventListener("click", () => {
+                currentPage = i;
+                displayPage(currentPage);
+              });
+              pagination.appendChild(btn);
+            }
+
+            const nextBtn = document.createElement("button");
+            nextBtn.textContent = "Next";
+            nextBtn.disabled = current === totalPages;
+            nextBtn.className = "page-btn";
+            nextBtn.addEventListener("click", () => {
+              if (currentPage < totalPages) {
+                currentPage++;
+                displayPage(currentPage);
+              }
+            });
+            pagination.appendChild(nextBtn);
+          }
+
+          displayPage(currentPage);
+        }
+
+        // Initialize search functionality
+        const searchInput = document.querySelector(".search-bar input");
+        const searchButton = document.querySelector(".search-bar button");
+
+        function handleSearch() {
+          const searchTerm = searchInput.value.toLowerCase();
+          const rows = document.querySelectorAll("#userTable tbody tr");
+
+          rows.forEach((row) => {
+            const text = row.textContent.toLowerCase();
+            row.style.display = text.includes(searchTerm) ? "" : "none";
+          });
+        }
+
+        searchButton.addEventListener("click", handleSearch);
+        searchInput.addEventListener("keypress", (e) => {
+          if (e.key === "Enter") handleSearch();
+        });
+
+        // Modal handling
+        const addUserModal = document.getElementById("addUserModal");
+        const addUserBtn = document.getElementById("addUserBtn");
+        const closeBtn = addUserModal.querySelector(".close");
+        const addUserForm = document.getElementById("addUserForm");
+
+        // Open modal
+        addUserBtn.onclick = () => (addUserModal.style.display = "block");
+
+        // Close modal
+        closeBtn.onclick = () => (addUserModal.style.display = "none");
+        window.onclick = (event) => {
+          if (event.target === addUserModal)
+            addUserModal.style.display = "none";
+        };
+
+        // Handle form submission
+        addUserForm.onsubmit = async (e) => {
+          e.preventDefault();
+
+          const formData = {
+            full_name: document.getElementById("full_name").value,
+            student_id: document.getElementById("student_id").value,
+            program_course: document.getElementById("program_course").value,
+            year_level: document.getElementById("year_level").value,
+            email: document.getElementById("email").value,
+            password: document.getElementById("password").value,
+          };
+
+          try {
+            const response = await fetch("http://localhost:8000/users/", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(formData),
+            });
+
+            if (!response.ok) {
+              const errorData = await response.json();
+              throw new Error(errorData.detail || "Failed to create user");
+            }
+
+            // Success
+            addUserModal.style.display = "none";
+            notyf.success("User added successfully!");
+
+            // Reset form
+            addUserForm.reset();
+
+            // Reload users table
+            await fetchUsers();
+          } catch (error) {
+            console.error("Error adding user:", error);
+            notyf.error(error.message);
+          }
+        };
+
+        // Initial data load
+        await fetchStats();
+        await fetchUsers();
+      });
+    </script>
+  </body>
+</html>

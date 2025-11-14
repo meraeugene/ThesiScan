@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Total Theses Uploads - ThesiScan</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
+    />
+    <link rel="stylesheet" href="css/libTotalThesesScreen.css" />
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/notyf@3/notyf.min.css"
+    />
+  </head>
+  <body>
+    <!-- Sidebar -->
+    <div class="sidebar">
+      <div class="logo">
+        <img src="images/sub logo.png" alt="Logo" />
+        <span class="logo-text">ThesiScan</span>
+      </div>
+
+      <nav class="nav-links">
+        <a href="librarianDashboard.html"
+          ><i class="fas fa-home"></i><span class="link-text">Home</span></a
+        >
+        <a href="libViewProfScreen.html"
+          ><i class="fas fa-user"></i><span class="link-text">Profile</span></a
+        >
+        <a href="libBookReportScreen.html"
+          ><i class="fas fa-book"></i
+          ><span class="link-text">Book Reports</span></a
+        >
+        <a href="libAccSettScreen.html"
+          ><i class="fas fa-cog"></i><span class="link-text">Settings</span></a
+        >
+      </nav>
+
+      <div class="logout-link">
+        <a href="#" onclick="logout()"
+          ><i class="fas fa-sign-out-alt"></i
+          ><span class="link-text">Logout</span></a
+        >
+      </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+      <div class="top-bar">
+        <h3 class="page-title">Total Theses Uploads</h3>
+        <div class="search-bar">
+          <input type="text" placeholder="Search theses..." />
+          <button type="submit">Search</button>
+        </div>
+      </div>
+
+      <div class="stats">
+        <div class="stat-box">
+          <h3 id="totalTheses">0</h3>
+          <p>Total Uploads</p>
+        </div>
+        <div class="stat-box">
+          <h3 id="thisMonthUploads">0</h3>
+          <p>Uploads This Month</p>
+        </div>
+      </div>
+
+      <div class="table-section">
+        <h3>Theses Uploaded</h3>
+        <div class="table-wrapper" style="max-height: 600px; overflow-y: auto">
+          <table>
+            <thead>
+              <tr>
+                <th>Thesis Title</th>
+                <th>Author</th>
+                <th>Program</th>
+                <th>Year</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="thesesTableBody">
+              <tr>
+                <td colspan="5" style="text-align: center">
+                  Loading theses data...
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Edit Modal -->
+    <div id="editModal" class="modal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2>Edit Thesis</h2>
+          <span class="close">&times;</span>
+        </div>
+        <form id="editForm">
+          <div class="form-group">
+            <label for="title">Title</label>
+            <input type="text" id="title" name="title" required />
+          </div>
+          <div class="form-group">
+            <label for="authors">Author/s</label>
+            <input type="text" id="authors" name="authors" required />
+          </div>
+          <div class="form-group">
+            <label for="program_course">Program/Course</label>
+            <input
+              type="text"
+              id="program_course"
+              name="program_course"
+              required
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="abstract">Abstract</label>
+            <textarea id="abstract" name="abstract"></textarea>
+          </div>
+          <div class="form-group">
+            <label for="keywords">Keywords</label>
+            <textarea id="keywords" name="keywords"></textarea>
+          </div>
+          <button type="submit" class="save-btn">Save Changes</button>
+        </form>
+      </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/notyf@3/notyf.min.js"></script>
+    <script>
+      const token = localStorage.getItem("token");
+
+      if (!token) {
+        window.location.href = "./";
+      }
+
+      function logout() {
+        localStorage.removeItem("token");
+        localStorage.removeItem("librarianId");
+        window.location.href = "index.html"; // send back to role selection
+      }
+
+      // Initialize Notyf
+      const notyf = new Notyf();
+
+      // Function to fetch and update statistics
+      async function fetchDashboardStats() {
+        try {
+          const response = await fetch("http://127.0.0.1:8000/theses");
+          if (!response.ok) {
+            throw new Error("Failed to fetch theses");
+          }
+          const theses = await response.json();
+
+          if (!Array.isArray(theses)) {
+            throw new Error("Expected array of theses");
+          }
+
+          // Update total theses count
+          document.getElementById("totalTheses").textContent =
+            theses.length.toString();
+
+          // Calculate this month's uploads using date_uploaded
+          const now = new Date();
+          const currentYear = now.getFullYear();
+          const currentMonth = now.getMonth() + 1; // JavaScript months are 0-11
+
+          const monthlyUploads = theses.filter((thesis) => {
+            if (!thesis.date_uploaded) return false;
+
+            const uploadDate = new Date(thesis.date_uploaded);
+
+            return (
+              uploadDate.getFullYear() === currentYear &&
+              uploadDate.getMonth() + 1 === currentMonth
+            );
+          }).length;
+
+          // Update monthly uploads count
+          document.getElementById("thisMonthUploads").textContent =
+            monthlyUploads.toString();
+        } catch (error) {
+          console.error("Error fetching stats:", error);
+          document.getElementById("totalTheses").textContent = "!";
+          document.getElementById("thisMonthUploads").textContent = "!";
+        }
+      }
+
+      // Function to fetch and update theses table
+      async function fetchRecentUploads() {
+        const tableBody = document.getElementById("thesesTableBody");
+
+        try {
+          // Show loading state
+          tableBody.innerHTML = `
+          <tr>
+            <td colspan="5" style="text-align: center;">
+              <div style="padding: 20px;">
+                <i class="fas fa-spinner fa-spin"></i>
+                <p style="margin-top: 10px;">Loading theses data...</p>
+              </div>
+            </td>
+          </tr>
+        `;
+
+          const response = await fetch("http://127.0.0.1:8000/theses");
+          if (!response.ok) {
+            throw new Error("Failed to fetch theses");
+          }
+
+          const theses = await response.json();
+          console.log("Theses data:", theses);
+
+          if (!Array.isArray(theses)) {
+            throw new Error("Expected array of theses");
+          }
+
+          if (theses.length === 0) {
+            tableBody.innerHTML = `
+            <tr>
+              <td colspan="5" style="text-align: center;">
+                <div style="padding: 20px;">
+                  <i class="fas fa-info-circle"></i>
+                  <p style="margin-top: 10px;">No theses available</p>
+                </div>
+              </td>
+            </tr>
+          `;
+            return;
+          }
+
+          // Sort theses by ID (newest first)
+          const sortedTheses = [...theses].sort((a, b) => b.id - a.id);
+
+          // Build table rows
+          const rows = sortedTheses
+            .map(
+              (thesis) => `
+          <tr>
+            <td><a href="libThesisDets.html?thesis_id=${
+              thesis.id
+            }" class="book-link">${thesis.title || "Untitled"}</a></td>
+            <td>${thesis.authors || "Unknown"}</td>
+            <td>${thesis.program_course || "N/A"}</td>
+            <td>${
+              thesis.date_published
+                ? new Date(thesis.date_published).getFullYear()
+                : "N/A"
+            }</td>
+            <td>
+              <button class="action-btn edit-btn" onclick="editThesis(${
+                thesis.id
+              })">Edit</button>
+              <button class="action-btn delete-btn" onclick="deleteThesis(${
+                thesis.id
+              })">Delete</button>
+            </td>
+          </tr>
+        `
+            )
+            .join("");
+
+          // Update table
+          tableBody.innerHTML = rows;
+        } catch (error) {
+          console.error("Error loading theses:", error);
+          tableBody.innerHTML = `
+          <tr>
+            <td colspan="5" style="text-align: center;">
+              <div style="color: #dc3545; padding: 20px;">
+                <i class="fas fa-exclamation-circle"></i>
+                <p style="margin: 10px 0;">Failed to load data</p>
+                <button onclick="fetchRecentUploads()" class="action-btn" style="background: #0288D1">
+                  Retry
+                </button>
+              </div>
+            </td>
+          </tr>
+        `;
+        }
+      }
+
+      // Function to handle search
+      function handleSearch() {
+        const searchInput = document.querySelector(".search-bar input");
+        const searchTerm = searchInput.value.toLowerCase().trim();
+
+        const rows = document.querySelectorAll("#thesesTableBody tr");
+        rows.forEach((row) => {
+          if (row.cells && row.cells.length > 1) {
+            const text = row.textContent.toLowerCase();
+            row.style.display = text.includes(searchTerm) ? "" : "none";
+          }
+        });
+      }
+
+      // Get modal elements
+      const modal = document.getElementById("editModal");
+      const closeBtn = document.getElementsByClassName("close")[0];
+      const editForm = document.getElementById("editForm");
+      let currentThesisId = null;
+
+      // Function to handle thesis editing
+      async function editThesis(thesisId) {
+        currentThesisId = thesisId;
+
+        try {
+          const response = await fetch(
+            `http://127.0.0.1:8000/theses/${thesisId}`
+          );
+          if (!response.ok) {
+            throw new Error("Failed to fetch thesis");
+          }
+
+          const thesis = await response.json();
+
+          // Populate form with current data
+          document.getElementById("title").value = thesis.title;
+          document.getElementById("authors").value = thesis.authors;
+          document.getElementById("program_course").value =
+            thesis.program_course;
+
+          document.getElementById("abstract").value = thesis.abstract || "";
+          document.getElementById("keywords").value = thesis.keywords || "";
+
+          // Show modal
+          modal.style.display = "block";
+        } catch (error) {
+          console.error("Error:", error);
+          alert("Error loading thesis data");
+        }
+      }
+
+      // Close modal when clicking (x)
+      closeBtn.onclick = function () {
+        modal.style.display = "none";
+      };
+
+      // Close modal when clicking outside
+      window.onclick = function (event) {
+        if (event.target == modal) {
+          modal.style.display = "none";
+        }
+      };
+
+      // Handle form submission
+      editForm.onsubmit = async function (e) {
+        e.preventDefault();
+
+        const formData = {
+          title: document.getElementById("title").value,
+          authors: document.getElementById("authors").value,
+          program_course: document.getElementById("program_course").value,
+          date_published: document.getElementById("date_published").value,
+          edition_version:
+            document.getElementById("edition_version").value || null,
+          abstract: document.getElementById("abstract").value || null,
+          keywords: document.getElementById("keywords").value || null,
+        };
+
+        try {
+          const response = await fetch(
+            `http://127.0.0.1:8000/theses/${currentThesisId}`,
+            {
+              method: "PUT",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify(formData),
+            }
+          );
+
+          if (!response.ok) {
+            throw new Error("Failed to update thesis");
+          }
+
+          // Close modal and reload thesis data
+          modal.style.display = "none";
+          await fetchRecentUploads();
+          await fetchDashboardStats();
+          notyf.success("Thesis updated successfully");
+        } catch (error) {
+          console.error("Error updating thesis:", error);
+          notyf.error("Error updating thesis. Please try again.");
+        }
+      };
+
+      // Function to handle thesis deletion
+      async function deleteThesis(id) {
+        if (
+          !confirm(
+            "Are you sure you want to delete this thesis? This action cannot be undone."
+          )
+        ) {
+          return;
+        }
+
+        try {
+          const response = await fetch(`http://127.0.0.1:8000/theses/${id}`, {
+            method: "DELETE",
+          });
+
+          if (response.ok) {
+            notyf.success("Thesis deleted successfully");
+
+            // --- Delete associated OCR scans in localStorage ---
+            const ocrScans = JSON.parse(
+              localStorage.getItem("ocr_scans") || "[]"
+            );
+            const updatedScans = ocrScans.filter(
+              (scan) => scan.thesis_id !== id
+            );
+            localStorage.setItem("ocr_scans", JSON.stringify(updatedScans));
+
+            // Refresh the table & stats
+            fetchDashboardStats();
+            fetchRecentUploads();
+          } else {
+            const error = await response.json();
+            notyf.error("Error deleting thesis: " + error.detail);
+          }
+        } catch (error) {
+          console.error("Error:", error);
+          notyf.error("Error deleting thesis. Please try again.");
+        }
+      }
+
+      // Set up search handlers
+      document
+        .querySelector(".search-bar button")
+        .addEventListener("click", handleSearch);
+      document
+        .querySelector(".search-bar input")
+        .addEventListener("input", handleSearch);
+
+      // Load initial data
+      fetchDashboardStats();
+      fetchRecentUploads();
+
+      // Set up auto-refresh
+      setInterval(() => {
+        fetchDashboardStats();
+        fetchRecentUploads();
+      }, 30000);
+    </script>
+  </body>
+</html>

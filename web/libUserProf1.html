@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>User Profile - Elaine Joy De La Torre</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
+    />
+    <link rel="stylesheet" href="css/libUserProf.css" />
+  </head>
+  <body>
+    <!-- Sidebar -->
+    <div class="sidebar">
+      <div class="logo">
+        <img src="images/sub logo.png" alt="Logo" />
+        <span class="logo-text">ThesiScan</span>
+      </div>
+      <nav class="nav-links">
+        <a href="librarianDashboard.html"
+          ><i class="fas fa-home"></i><span class="link-text">Home</span></a
+        >
+        <a href="libViewProfScreen.html"
+          ><i class="fas fa-user"></i><span class="link-text">Profile</span></a
+        >
+        <a href="libBookReportScreen.html"
+          ><i class="fas fa-book"></i
+          ><span class="link-text">Book Reports</span></a
+        >
+        <a href="libAccSettScreen.html"
+          ><i class="fas fa-cog"></i><span class="link-text">Settings</span></a
+        >
+      </nav>
+      <div class="logout-link">
+        <a href="#" onclick="logout()"
+          ><i class="fas fa-sign-out-alt"></i
+          ><span class="link-text">Logout</span></a
+        >
+      </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+      <!-- Profile Header -->
+      <div class="profile-header">
+        <img id="profile-picture" src="TS_student.png" alt="User Icon" />
+        <div class="profile-info">
+          <p><strong>Student Name:</strong> <span id="student-name"></span></p>
+          <p><strong>Student ID:</strong> <span id="student-id"></span></p>
+          <p><strong>Course:</strong> <span id="course"></span></p>
+          <p><strong>Year:</strong> <span id="year"></span></p>
+          <p><strong>Email:</strong> <span id="email"></span></p>
+        </div>
+      </div>
+
+      <!-- Stats -->
+      <div class="stats">
+        <div class="stat-box">
+          <h3 id="total-thesis">0</h3>
+          <p>Total Thesis Viewed</p>
+        </div>
+        <div class="stat-box">
+          <h3 id="bookmarked">0</h3>
+          <p>Bookmarked</p>
+        </div>
+        <div class="stat-box">
+          <h3 id="last-login">--</h3>
+          <p>Last Login</p>
+        </div>
+      </div>
+
+      <!-- Reading History -->
+      <h3>Reading History</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Title</th>
+            <th>Author(s)</th>
+            <th>Date Accessed</th>
+            <th>Location</th>
+          </tr>
+        </thead>
+        <tbody id="reading-history">
+          <!-- Rows will be inserted dynamically -->
+        </tbody>
+      </table>
+
+      <!-- Pagination -->
+      <div class="pagination">
+        <button id="prev-page" disabled>Previous</button>
+        <span id="page-info">Page 1 of 1</span>
+        <button id="next-page" disabled>Next</button>
+      </div>
+    </div>
+
+    <script>
+      function logout() {
+        localStorage.removeItem("token");
+        localStorage.removeItem("studentId");
+        window.location.href = "index.html";
+      }
+
+      const token = localStorage.getItem("token");
+      if (!token) window.location.href = "./";
+
+      const params = new URLSearchParams(window.location.search);
+      const id = params.get("id");
+
+      let currentPage = 1;
+      const pageSize = 5; // number of items per page
+      let allHistory = []; // store full reading history
+
+      async function fetchUserProfile() {
+        try {
+          const res = await fetch(`http://localhost:8000/users/${id}`, {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          if (!res.ok) throw new Error("User not found");
+          const user = await res.json();
+
+          document.getElementById("student-name").textContent = user.full_name;
+          document.getElementById("student-id").textContent = user.student_id;
+          document.getElementById("course").textContent = user.program_course;
+          document.getElementById("year").textContent = user.year_level;
+          document.getElementById("email").textContent = user.email;
+
+          if (user.profile_picture) {
+            document.getElementById("profile-picture").src =
+              user.profile_picture.startsWith("/static/")
+                ? `http://127.0.0.1:8000${
+                    user.profile_picture
+                  }?t=${new Date().getTime()}`
+                : user.profile_picture;
+          } else {
+            document.getElementById("profile-picture").src = "TS_student.png";
+          }
+
+          // Show full date + time for last login
+          document.getElementById("last-login").textContent = user.last_login
+            ? new Date(user.last_login).toLocaleString()
+            : "--";
+
+          // Fetch reading history and stats
+          fetchReadingHistory(user.student_id, currentPage, pageSize);
+
+          // Fetch bookmarks separately
+          const bookmarkRes = await fetch(
+            `http://127.0.0.1:8000/users/bookmarks/${user.student_id}`,
+            {
+              headers: { Authorization: `Bearer ${token}` },
+            }
+          );
+          const bookmarks = bookmarkRes.ok ? await bookmarkRes.json() : [];
+          document.getElementById("bookmarked").textContent = bookmarks.length;
+        } catch (err) {
+          console.error(err);
+          alert("Failed to load user profile.");
+        }
+      }
+
+      async function fetchReadingHistory(studentId, page, size) {
+        try {
+          const res = await fetch(
+            `http://localhost:8000/users/search-history/${studentId}`,
+            {
+              headers: { Authorization: `Bearer ${token}` },
+            }
+          );
+          allHistory = res.ok ? await res.json() : [];
+
+          // Total theses read
+          document.getElementById("total-thesis").textContent =
+            allHistory.length;
+
+          // Pagination
+          const start = (page - 1) * size;
+          const end = start + size;
+          const pageItems = allHistory.slice(start, end);
+
+          const tbody = document.getElementById("reading-history");
+          tbody.innerHTML = "";
+          pageItems.forEach((item) => {
+            const tr = document.createElement("tr");
+            tr.innerHTML = `
+          <td>${item.book_title}</td>
+          <td>${item.author}</td>
+          <td>${new Date(item.date_accessed).toLocaleString()}</td>
+          <td>${item.access_location}</td>
+        `;
+            tbody.appendChild(tr);
+          });
+
+          document.getElementById("prev-page").disabled = page === 1;
+          document.getElementById("next-page").disabled =
+            end >= allHistory.length;
+          document.getElementById(
+            "page-info"
+          ).textContent = `Page ${page} of ${Math.ceil(
+            allHistory.length / size
+          )}`;
+        } catch (err) {
+          console.error(err);
+        }
+      }
+
+      document.getElementById("prev-page").addEventListener("click", () => {
+        if (currentPage > 1) {
+          currentPage--;
+          fetchReadingHistory(
+            document.getElementById("student-id").textContent,
+            currentPage,
+            pageSize
+          );
+        }
+      });
+
+      document.getElementById("next-page").addEventListener("click", () => {
+        if (currentPage * pageSize < allHistory.length) {
+          currentPage++;
+          fetchReadingHistory(
+            document.getElementById("student-id").textContent,
+            currentPage,
+            pageSize
+          );
+        }
+      });
+
+      fetchUserProfile();
+    </script>
+  </body>
+</html>

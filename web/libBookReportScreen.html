@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Book Report - ThesiScan</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
+    />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="css/libBookReportScreen.css" />
+  </head>
+  <body>
+    <!-- Sidebar -->
+    <div class="sidebar">
+      <div class="logo">
+        <img src="images/sub logo.png" alt="Logo" />
+        <span class="logo-text">ThesiScan</span>
+      </div>
+
+      <nav class="nav-links">
+        <a href="librarianDashboard.html"
+          ><i class="fas fa-home"></i><span class="link-text">Home</span></a
+        >
+        <a href="libViewProfScreen.html"
+          ><i class="fas fa-user"></i><span class="link-text">Profile</span></a
+        >
+        <a href="libBookReportScreen.html"
+          ><i class="fas fa-book"></i
+          ><span class="link-text">Book Reports</span></a
+        >
+        <a href="libAccSettScreen.html"
+          ><i class="fas fa-cog"></i><span class="link-text">Settings</span></a
+        >
+      </nav>
+
+      <div class="logout-link">
+        <a href="#" onclick="logout()"
+          ><i class="fas fa-sign-out-alt"></i
+          ><span class="link-text">Logout</span></a
+        >
+      </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+      <div class="top-bar">
+        <h3 class="page-title">Book Report</h3>
+        <div class="search-bar">
+          <input type="text" placeholder="Search..." />
+          <button>Search</button>
+        </div>
+      </div>
+
+      <div class="report-container">
+        <div class="left-section">
+          <div class="stat-box">
+            <span id="totalThesesCount">225</span> <br />
+            <span style="font-size: 14px; font-weight: normal"
+              >Total Theses</span
+            >
+          </div>
+
+          <div>
+            <h4 style="margin-bottom: 10px">Most Viewed Books</h4>
+            <table>
+              <thead>
+                <tr>
+                  <th>Book Title</th>
+                  <th>Views</th>
+                </tr>
+              </thead>
+              <tbody id="mostViewedBooks">
+                <tr>
+                  <td>
+                    Seismic Retrofitting of Reinforced Concrete Structures
+                  </td>
+                  <td>149</td>
+                </tr>
+                <tr>
+                  <td>Machine Learning for Predictive Maintenance</td>
+                  <td>127</td>
+                </tr>
+                <tr>
+                  <td>IoT Integration for Smart Campus Applications</td>
+                  <td>79</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="chart-container">
+          <canvas id="bookChart"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- Chart.js Script -->
+    <script>
+      const token = localStorage.getItem("token");
+
+      if (!token) {
+        window.location.href = "./";
+      }
+
+      function logout() {
+        localStorage.removeItem("token");
+        localStorage.removeItem("librarianId");
+        window.location.href = "index.html"; // send back to role selection
+      }
+
+      let bookChart = null;
+
+      async function fetchAndUpdateData() {
+        try {
+          const response = await fetch("http://127.0.0.1:8000/reports/stats/");
+          if (!response.ok) {
+            throw new Error("Network response was not ok");
+          }
+          const data = await response.json();
+
+          // Update total theses count
+          document.getElementById("totalThesesCount").textContent =
+            data.total_theses || "0";
+
+          // Update most viewed books table
+          const tableBody = document.getElementById("mostViewedBooks");
+          if (data.most_accessed && data.most_accessed.length > 0) {
+            tableBody.innerHTML = data.most_accessed
+              .slice(0, 3)
+              .map(
+                (book) => `
+              <tr>
+                <td>${book.title}</td>
+                <td>${book.access_count}</td>
+              </tr>
+            `
+              )
+              .join("");
+          }
+
+          // Get top 8 most accessed books for the chart
+          const topEight = data.most_accessed
+            .sort((a, b) => b.access_count - a.access_count)
+            .slice(0, 8);
+
+          // If there's an existing chart, destroy it
+          if (bookChart) {
+            bookChart.destroy();
+          }
+
+          // Create new chart
+          const ctx = document.getElementById("bookChart").getContext("2d");
+          bookChart = new Chart(ctx, {
+            type: "bar",
+            data: {
+              labels: topEight.map((item) => item.title),
+              datasets: [
+                {
+                  label: "Number of Students Who Viewed",
+                  data: topEight.map((item) => item.access_count),
+                  backgroundColor: "#00cfff",
+                },
+              ],
+            },
+            options: {
+              responsive: true,
+              maintainAspectRatio: false,
+              scales: {
+                y: {
+                  beginAtZero: true,
+                  ticks: {
+                    stepSize: 20,
+                  },
+                },
+                x: {
+                  ticks: {
+                    display: false,
+                  },
+                  grid: {
+                    display: false,
+                  },
+                },
+              },
+            },
+          });
+        } catch (error) {
+          console.error("Error fetching data:", error);
+          // Keep the default values in case of error
+        }
+      }
+
+      // Initial fetch
+      fetchAndUpdateData();
+
+      // Refresh data every 30 seconds
+      setInterval(fetchAndUpdateData, 30000);
+    </script>
+  </body>
+</html>
