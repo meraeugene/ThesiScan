@@ -195,7 +195,7 @@ async function submitStepOCR() {
   extractBtn.innerHTML = `<span class="loader"></span> Extracting ${steps[stepIndex].name}...`;
 
   try {
-    const endpoint = `https://web-production-bfdc1d.up.railway.app${ocrEndpoints[stepIndex]}`;
+    const endpoint = `http://127.0.0.1:8000${ocrEndpoints[stepIndex]}`;
     const response = await fetch(endpoint, {
       method: "POST",
       body: formData,
