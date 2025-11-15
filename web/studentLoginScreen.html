@@ -91,16 +91,19 @@
           const password = document.getElementById("password").value;
 
           try {
-            const response = await fetch("http://127.0.0.1:8000/login/", {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/x-www-form-urlencoded",
-              },
-              body: new URLSearchParams({
-                student_id: studentId,
-                password: password,
-              }),
-            });
+            const response = await fetch(
+              "https://web-production-bfdc1d.up.railway.app/login/",
+              {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/x-www-form-urlencoded",
+                },
+                body: new URLSearchParams({
+                  student_id: studentId,
+                  password: password,
+                }),
+              }
+            );
             if (response.ok) {
               // Store user info in localStorage for profile page
               const student = await response.json();

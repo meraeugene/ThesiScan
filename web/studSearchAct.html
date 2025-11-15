@@ -221,7 +221,9 @@
         }
 
         // Fetch search history
-        fetch(`http://127.0.0.1:8000/users/search-history/${studentId}`)
+        fetch(
+          `https://web-production-bfdc1d.up.railway.app/users/search-history/${studentId}`
+        )
           .then((res) => (res.ok ? res.json() : []))
           .then((data) => {
             const historyEmpty = document.getElementById("historyEmpty");
@@ -244,7 +246,9 @@
           );
 
         // Fetch bookmarks
-        fetch(`http://127.0.0.1:8000/users/bookmarks/${studentId}`)
+        fetch(
+          `https://web-production-bfdc1d.up.railway.app/users/bookmarks/${studentId}`
+        )
           .then((res) => (res.ok ? res.json() : []))
           .then((data) => {
             const bookmarksEmpty = document.getElementById("bookmarksEmpty");

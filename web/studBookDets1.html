@@ -95,9 +95,12 @@
 
         try {
           // Fetch thesis details
-          const res = await fetch(`http://127.0.0.1:8000/theses/${thesisId}`, {
-            headers: { Authorization: `Bearer ${token}` },
-          });
+          const res = await fetch(
+            `https://web-production-bfdc1d.up.railway.app/theses/${thesisId}`,
+            {
+              headers: { Authorization: `Bearer ${token}` },
+            }
+          );
           if (!res.ok) throw new Error("Thesis not found");
           const thesis = await res.json();
 
@@ -105,7 +108,7 @@
           let isBookmarked = false;
           try {
             const bookmarksRes = await fetch(
-              `http://127.0.0.1:8000/users/bookmarks/${studentId}`,
+              `https://web-production-bfdc1d.up.railway.app/users/bookmarks/${studentId}`,
               { headers: { Authorization: `Bearer ${token}` } }
             );
             if (bookmarksRes.ok) {
@@ -137,7 +140,6 @@
           thesis.date_published
         ).toLocaleDateString("en-US", {
           month: "long",
-          day: "numeric",
           year: "numeric",
         })}</p>
       </div>
@@ -162,21 +164,24 @@
     `;
 
           // Record search history
-          fetch("http://127.0.0.1:8000/users/search-history/", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${token}`,
-            },
-            body: JSON.stringify({
-              student_id: studentId,
-              thesis_id: thesis.id,
-              book_title: thesis.title,
-              author: thesis.authors,
-              date_accessed: new Date().toISOString().slice(0, 10),
-              access_location: "Online",
-            }),
-          }).catch((err) =>
+          fetch(
+            "https://web-production-bfdc1d.up.railway.app/users/search-history/",
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${token}`,
+              },
+              body: JSON.stringify({
+                student_id: studentId,
+                thesis_id: thesis.id,
+                book_title: thesis.title,
+                author: thesis.authors,
+                date_accessed: new Date().toISOString().slice(0, 10),
+                access_location: "Online",
+              }),
+            }
+          ).catch((err) =>
             console.error("Failed to record search history:", err)
           );
 
@@ -193,7 +198,7 @@
               if (!nowBookmarked) {
                 // Add bookmark
                 const res = await fetch(
-                  "http://127.0.0.1:8000/users/bookmarks/",
+                  "https://web-production-bfdc1d.up.railway.app/users/bookmarks/",
                   {
                     method: "POST",
                     headers: {
@@ -215,7 +220,7 @@
               } else {
                 // Remove bookmark
                 const res = await fetch(
-                  `http://127.0.0.1:8000/users/bookmarks/${studentId}/${thesis.id}`,
+                  `https://web-production-bfdc1d.up.railway.app/users/bookmarks/${studentId}/${thesis.id}`,
                   {
                     method: "DELETE",
                     headers: { Authorization: `Bearer ${token}` },

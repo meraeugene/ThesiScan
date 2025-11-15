@@ -86,7 +86,9 @@
 
         async function loadTheses() {
           try {
-            const response = await fetch("http://127.0.0.1:8000/theses");
+            const response = await fetch(
+              "https://web-production-bfdc1d.up.railway.app/theses"
+            );
             if (!response.ok) {
               container.innerHTML = `<p>Failed to load results.</p>`;
               return;

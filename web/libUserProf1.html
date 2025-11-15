@@ -128,7 +128,7 @@
           if (user.profile_picture) {
             document.getElementById("profile-picture").src =
               user.profile_picture.startsWith("/static/")
-                ? `http://127.0.0.1:8000${
+                ? `https://web-production-bfdc1d.up.railway.app${
                     user.profile_picture
                   }?t=${new Date().getTime()}`
                 : user.profile_picture;
@@ -146,7 +146,7 @@
 
           // Fetch bookmarks separately
           const bookmarkRes = await fetch(
-            `http://127.0.0.1:8000/users/bookmarks/${user.student_id}`,
+            `https://web-production-bfdc1d.up.railway.app/users/bookmarks/${user.student_id}`,
             {
               headers: { Authorization: `Bearer ${token}` },
             }

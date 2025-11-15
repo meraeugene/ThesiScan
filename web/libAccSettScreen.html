@@ -124,7 +124,7 @@
     const librarianId = localStorage.getItem('librarianId');
 
     if (librarianId) {
-      fetch(`http://127.0.0.1:8000/librarian/id/${librarianId}`)
+      fetch(`https://web-production-bfdc1d.up.railway.app/librarian/id/${librarianId}`)
         .then((response) => {
           if (!response.ok) throw new Error("Failed to fetch librarian data");
           return response.json();
@@ -139,7 +139,7 @@
 
           // Handle profile picture
           if (librarian.profile_picture && librarian.profile_picture.startsWith('/static/')) {
-            profilePreview.src = 'http://127.0.0.1:8000' + librarian.profile_picture + '?t=' + new Date().getTime();
+            profilePreview.src = 'https://web-production-bfdc1d.up.railway.app' + librarian.profile_picture + '?t=' + new Date().getTime();
           } else {
             profilePreview.src = 'TS_librarian.png';
           }
@@ -176,7 +176,7 @@
       formData.set('username', document.getElementById('username').value);
 
       try {
-        const response = await fetch('http://127.0.0.1:8000/librarian/update/', {
+        const response = await fetch('https://web-production-bfdc1d.up.railway.app/librarian/update/', {
           method: 'POST',
           body: formData
         });

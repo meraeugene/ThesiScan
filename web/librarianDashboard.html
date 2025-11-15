@@ -161,7 +161,9 @@
       // Function to fetch and update dashboard stats
       async function fetchDashboardStats() {
         try {
-          const response = await fetch("http://127.0.0.1:8000/reports/stats/");
+          const response = await fetch(
+            "https://web-production-bfdc1d.up.railway.app/reports/stats/"
+          );
           if (!response.ok) {
             throw new Error("Failed to fetch stats");
           }
@@ -190,7 +192,9 @@
             '<tr><td colspan="4" style="text-align: center;">Loading recent uploads...</td></tr>';
 
           // Fetch theses
-          const response = await fetch("http://127.0.0.1:8000/theses");
+          const response = await fetch(
+            "https://web-production-bfdc1d.up.railway.app/theses"
+          );
 
           if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
