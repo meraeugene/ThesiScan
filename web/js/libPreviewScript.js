@@ -318,7 +318,7 @@ document.getElementById("bookForm").addEventListener("submit", async (e) => {
   try {
     // 1️ Save thesis to backend
     const res = await fetch(
-      "https://web-production-bfdc1d.up.railway.app/theses/",
+      "https://web-production-bfdc1d.up.railway.app/theses/add",
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
