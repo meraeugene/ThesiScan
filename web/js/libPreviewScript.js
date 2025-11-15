@@ -52,13 +52,29 @@ function logout() {
   window.location.href = "index.html"; // send back to role selection
 }
 
+function resizeImage(dataUrl, maxWidth = 800) {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.onload = () => {
+      const scale = maxWidth / img.width;
+      const canvas = document.createElement("canvas");
+      canvas.width = maxWidth;
+      canvas.height = img.height * scale;
+      const ctx = canvas.getContext("2d");
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      resolve(canvas.toDataURL("image/jpeg", 0.8)); // compress to 80% quality
+    };
+    img.src = dataUrl;
+  });
+}
+
 // --- Camera Setup ---
 async function startCamera() {
   try {
     stream = await navigator.mediaDevices.getUserMedia({
       video: {
-        width: { ideal: 3840 }, // 4K capture
-        height: { ideal: 2160 },
+        width: { ideal: 1280 },
+        height: { ideal: 720 },
         aspectRatio: { ideal: 1 / 1.414 }, // A4 shape
         facingMode: { ideal: "environment" },
       },
@@ -123,16 +139,18 @@ function jumpToStep(index) {
 }
 
 // --- Capture ---
-captureBtn.addEventListener("click", () => {
+captureBtn.addEventListener("click", async () => {
   const ctx = canvas.getContext("2d");
   canvas.width = video.videoWidth;
   canvas.height = video.videoHeight;
   ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
   const dataUrl = canvas.toDataURL("image/jpeg");
 
-  capturedByStep[stepIndex].push(dataUrl);
+  const resizedDataUrl = await resizeImage(dataUrl);
 
-  capturedImage.src = dataUrl;
+  capturedByStep[stepIndex].push(resizedDataUrl);
+
+  capturedImage.src = resizedDataUrl;
   capturedImage.style.display = "block";
   video.style.display = "none";
 
@@ -317,11 +335,14 @@ document.getElementById("bookForm").addEventListener("submit", async (e) => {
 
   try {
     // 1️ Save thesis to backend
-    const res = await fetch("http://127.0.0.1:8000/theses/", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(thesisData),
-    });
+    const res = await fetch(
+      "https://web-production-bfdc1d.up.railway.app/theses/",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(thesisData),
+      }
+    );
 
     if (!res.ok) throw new Error("Save failed");
 
