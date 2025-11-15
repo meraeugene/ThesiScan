@@ -166,7 +166,7 @@
         async function fetchStats() {
           try {
             const response = await fetch(
-              "http://localhost:8000/reports/stats/"
+              "https://web-production-bfdc1d.up.railway.app/reports/stats/"
             );
             const data = await response.json();
 
@@ -193,7 +193,9 @@
         // Fetch users data
         async function fetchUsers() {
           try {
-            const response = await fetch("http://localhost:8000/users/list/");
+            const response = await fetch(
+              "https://web-production-bfdc1d.up.railway.app/users/list/"
+            );
             const users = await response.json();
             updateUserTable(users);
           } catch (error) {
@@ -259,7 +261,7 @@
               if (confirm("Are you sure you want to delete this user?")) {
                 try {
                   const res = await fetch(
-                    `http://localhost:8000/users/${userId}`,
+                    `https://web-production-bfdc1d.up.railway.app/users/${userId}`,
                     {
                       method: "DELETE",
                       headers: { Authorization: `Bearer ${token}` },
@@ -388,11 +390,14 @@
           };
 
           try {
-            const response = await fetch("http://localhost:8000/users/", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify(formData),
-            });
+            const response = await fetch(
+              "https://web-production-bfdc1d.up.railway.app/users/",
+              {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(formData),
+              }
+            );
 
             if (!response.ok) {
               const errorData = await response.json();

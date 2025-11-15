@@ -113,9 +113,12 @@
 
       async function fetchUserProfile() {
         try {
-          const res = await fetch(`http://localhost:8000/users/${id}`, {
-            headers: { Authorization: `Bearer ${token}` },
-          });
+          const res = await fetch(
+            `https://web-production-bfdc1d.up.railway.app/users/${id}`,
+            {
+              headers: { Authorization: `Bearer ${token}` },
+            }
+          );
           if (!res.ok) throw new Error("User not found");
           const user = await res.json();
 
@@ -162,7 +165,7 @@
       async function fetchReadingHistory(studentId, page, size) {
         try {
           const res = await fetch(
-            `http://localhost:8000/users/search-history/${studentId}`,
+            `https://web-production-bfdc1d.up.railway.app/users/search-history/${studentId}`,
             {
               headers: { Authorization: `Bearer ${token}` },
             }
