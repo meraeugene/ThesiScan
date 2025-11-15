@@ -52,6 +52,22 @@ function logout() {
   window.location.href = "index.html"; // send back to role selection
 }
 
+function resizeImage(dataUrl, maxWidth = 800) {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.onload = () => {
+      const scale = maxWidth / img.width;
+      const canvas = document.createElement("canvas");
+      canvas.width = maxWidth;
+      canvas.height = img.height * scale;
+      const ctx = canvas.getContext("2d");
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      resolve(canvas.toDataURL("image/jpeg", 0.8)); // compress to 80% quality
+    };
+    img.src = dataUrl;
+  });
+}
+
 // --- Camera Setup ---
 async function startCamera() {
   try {
@@ -123,14 +139,15 @@ function jumpToStep(index) {
 }
 
 // --- Capture ---
-captureBtn.addEventListener("click", () => {
+captureBtn.addEventListener("click", async () => {
   const ctx = canvas.getContext("2d");
   canvas.width = video.videoWidth;
   canvas.height = video.videoHeight;
   ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
   const dataUrl = canvas.toDataURL("image/jpeg");
 
-  capturedByStep[stepIndex].push(dataUrl);
+  const resizedDataUrl = await resizeImage(dataUrl);
+  capturedByStep[stepIndex].push(resizedDataUrl);
 
   capturedImage.src = dataUrl;
   capturedImage.style.display = "block";
