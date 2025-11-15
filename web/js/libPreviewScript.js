@@ -57,9 +57,9 @@ async function startCamera() {
   try {
     stream = await navigator.mediaDevices.getUserMedia({
       video: {
-        width: { ideal: 3840 }, // 4K capture
-        height: { ideal: 2160 },
-        aspectRatio: { ideal: 1 / 1.414 }, // A4 shape
+        width: { ideal: 1280 }, // smaller width
+        height: { ideal: 720 }, // adjust height proportionally
+        aspectRatio: { ideal: 1 / 1.414 }, // keep A4 shape
         facingMode: { ideal: "environment" },
       },
     });
