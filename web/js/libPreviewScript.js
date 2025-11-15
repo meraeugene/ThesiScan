@@ -195,7 +195,7 @@ async function submitStepOCR() {
   extractBtn.innerHTML = `<span class="loader"></span> Extracting ${steps[stepIndex].name}...`;
 
   try {
-    const endpoint = `http://127.0.0.1:8000${ocrEndpoints[stepIndex]}`;
+    const endpoint = `https://web-production-bfdc1d.up.railway.app${ocrEndpoints[stepIndex]}`;
     const response = await fetch(endpoint, {
       method: "POST",
       body: formData,
@@ -317,11 +317,14 @@ document.getElementById("bookForm").addEventListener("submit", async (e) => {
 
   try {
     // 1️ Save thesis to backend
-    const res = await fetch("http://127.0.0.1:8000/theses/", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(thesisData),
-    });
+    const res = await fetch(
+      "https://web-production-bfdc1d.up.railway.app/theses/",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(thesisData),
+      }
+    );
 
     if (!res.ok) throw new Error("Save failed");
 
