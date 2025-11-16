@@ -74,6 +74,8 @@
               headers: { Accept: "application/json" },
             });
 
+            console.log(res);
+
             const body = await res.json().catch(() => ({}));
 
             if (res.status === 404) {
