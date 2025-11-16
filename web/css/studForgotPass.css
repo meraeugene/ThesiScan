@@ -1,4 +1,7 @@
-/* Overlay for opacity */
+* {
+  box-sizing: border-box;
+}
+
 body::before {
   content: "";
   position: fixed;
@@ -19,7 +22,7 @@ body::before {
   padding: 30px 40px;
   border-radius: 16px;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
-  max-width: 400px;
+  max-width: 450px;
   width: 100%;
   text-align: center;
   z-index: 1;
@@ -31,7 +34,8 @@ h2 {
   color: #37474f;
 }
 
-input[type="email"] {
+input[type="email"],
+input[type="password"] {
   width: 100%;
   padding: 12px;
   margin-bottom: 20px;
@@ -65,4 +69,26 @@ input[type="email"] {
 
 .back-link:hover {
   text-decoration: underline;
+}
+
+/* Spinner inside button */
+.spinner {
+  border: 3px solid #f3f3f3; /* Light gray */
+  border-top: 3px solid #0288d1; /* Primary color */
+  border-radius: 50%;
+  width: 16px;
+  height: 16px;
+  animation: spin 1s linear infinite;
+  display: inline-block;
+  vertical-align: middle;
+  margin-left: 8px; /* space from text */
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
 }

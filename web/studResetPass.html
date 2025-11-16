@@ -1,0 +1,136 @@
+<!-- reset.html -->
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Reset Password - ThesiScan</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="css/studForgotPass.css" />
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/notyf@3/notyf.min.css"
+    />
+    <style>
+      body {
+        font-family: "Segoe UI", sans-serif;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 100vh;
+        margin: 0;
+        background: url("TS_bg.jpg") no-repeat center center;
+        background-size: cover;
+        flex-direction: column;
+        gap: 40px;
+      }
+    </style>
+  </head>
+  <body>
+    <img src="images/main logo.png" alt="ThesiScan Logo" class="logo" />
+    <div class="reset-box">
+      <h2>Create a new password</h2>
+      <form id="resetPasswordForm">
+        <input
+          type="password"
+          id="password"
+          placeholder="New password"
+          required
+          minlength="6"
+        />
+        <input
+          type="password"
+          id="confirm_password"
+          placeholder="Confirm new password"
+          required
+          minlength="6"
+        />
+        <button type="submit" class="reset-button">
+          <span class="btn-text"> Change password</span>
+        </button>
+      </form>
+      <a href="studentLoginScreen.html" class="back-link">← Back to Login</a>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/notyf@3/notyf.min.js"></script>
+    <script>
+      const notyf = new Notyf();
+
+      //   const BACKEND_RESET = "http://127.0.0.1:8000/reset-password/";
+      const BACKEND_RESET =
+        "https://web-production-bfdc1d.up.railway.app/reset-password/";
+
+      function getQueryParam(name) {
+        const params = new URLSearchParams(window.location.search);
+        return params.get(name);
+      }
+
+      const button = document.querySelector(".reset-button");
+      const btnText = button.querySelector(".btn-text");
+
+      document
+        .getElementById("resetPasswordForm")
+        .addEventListener("submit", async function (e) {
+          e.preventDefault();
+
+          const password = document.getElementById("password").value.trim();
+          const confirm = document
+            .getElementById("confirm_password")
+            .value.trim();
+
+          // Add spinner
+          const spinner = document.createElement("span");
+          spinner.className = "spinner";
+          button.appendChild(spinner);
+          button.disabled = true;
+
+          if (!password || password.length < 6) {
+            spinner.remove();
+            button.disabled = false;
+            return notyf.error("Password must be at least 6 characters.");
+          }
+
+          if (password !== confirm) {
+            spinner.remove();
+            button.disabled = false;
+            return notyf.error("Passwords do not match.");
+          }
+
+          const token = getQueryParam("token");
+          if (!token) return notyf.error("Missing reset token.");
+
+          try {
+            const form = new URLSearchParams();
+            form.append("token", token);
+            form.append("new_password", password);
+
+            const res = await fetch(BACKEND_RESET, {
+              method: "POST",
+              body: form,
+              headers: { Accept: "application/json" },
+            });
+
+            if (res.ok) {
+              notyf.success(
+                "Password updated. You can now log in with your new password."
+              );
+            } else {
+              const body = await res.json().catch(() => ({}));
+              notyf.error(
+                body.detail ||
+                  "Failed to reset password. The token may be invalid or expired."
+              );
+            }
+          } catch (err) {
+            console.error(err);
+            notyf.error(
+              "Failed to reset password. Check network or try again later."
+            );
+          } finally {
+            // Remove spinner and re-enable button
+            spinner.remove();
+            button.disabled = false;
+          }
+        });
+    </script>
+  </body>
+</html>

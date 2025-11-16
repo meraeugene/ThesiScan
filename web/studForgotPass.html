@@ -1,3 +1,4 @@
+<!-- forgot.html -->
 <!DOCTYPE html>
 <html lang="en">
   <head>
@@ -5,6 +6,10 @@
     <title>Forgot Password - ThesiScan</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="stylesheet" href="css/studForgotPass.css" />
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/notyf@3/notyf.min.css"
+    />
     <style>
       body {
         font-family: "Segoe UI", sans-serif;
@@ -21,28 +26,70 @@
     </style>
   </head>
   <body>
-    <!-- Logo -->
     <img src="images/main logo.png" alt="ThesiScan Logo" class="logo" />
-
     <div class="reset-box">
       <h2>Reset Password</h2>
       <p>Enter your registered email to reset your password:</p>
       <form id="resetForm">
         <input type="email" id="email" placeholder="Email Address" required />
-        <button type="submit" class="reset-button">Send Reset Link</button>
+        <button type="submit" class="reset-button">
+          <span class="btn-text">Send Reset Link</span>
+        </button>
       </form>
       <a href="studentLoginScreen.html" class="back-link">← Back to Login</a>
     </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/notyf@3/notyf.min.js"></script>
     <script>
+      const notyf = new Notyf();
+
+      // const BACKEND_FORGOT = "http://127.0.0.1:8000/forgot-password/";
+      const BACKEND_FORGOT =
+        "https://web-production-bfdc1d.up.railway.app/forgot-password/";
+
       document
         .getElementById("resetForm")
-        .addEventListener("submit", function (event) {
+        .addEventListener("submit", async function (event) {
           event.preventDefault();
-          const email = document.getElementById("email").value;
-          if (email) {
-            alert("A password reset link has been sent to " + email);
-            window.location.href = "studentLoginScreen.html";
+
+          const email = document.getElementById("email").value.trim();
+          if (!email) return notyf.error("Please enter your email.");
+
+          const button = document.querySelector(".reset-button");
+          const btnText = button.querySelector(".btn-text");
+
+          // Add spinner
+          const spinner = document.createElement("span");
+          spinner.className = "spinner";
+          button.appendChild(spinner);
+          button.disabled = true;
+
+          try {
+            const form = new URLSearchParams();
+            form.append("email", email);
+
+            const res = await fetch(BACKEND_FORGOT, {
+              method: "POST",
+              body: form,
+              headers: { Accept: "application/json" },
+            });
+
+            const body = await res.json().catch(() => ({}));
+
+            if (res.status === 404) {
+              notyf.error("Email not found. Please enter a registered email.");
+            } else if (!res.ok) {
+              notyf.error(body.detail || "Failed to send reset link.");
+            } else {
+              notyf.success("Reset link has been sent to your email.");
+            }
+          } catch (err) {
+            console.error(err);
+            notyf.error("Network error. Try again later.");
+          } finally {
+            // Remove spinner and re-enable button
+            spinner.remove();
+            button.disabled = false;
           }
         });
     </script>

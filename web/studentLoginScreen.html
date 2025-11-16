@@ -54,7 +54,9 @@
           </button>
         </div>
 
-        <button type="submit" class="login-button">Login</button>
+        <button type="submit" class="login-button">
+          <span class="btn-text"></span>Login
+        </button>
       </form>
       <div
         style="display: flex; justify-content: space-between; margin-top: 15px"
@@ -81,14 +83,24 @@
         eyeIcon.classList.toggle("fa-eye-slash");
       }
 
+      const button = document.querySelector(".login-button");
+      const btnText = button.querySelector(".btn-text");
+
       document
         .getElementById("loginForm")
         .addEventListener("submit", async function (event) {
           event.preventDefault();
+
           const studentId = document
             .getElementById("studentIdInput")
             .value.trim();
           const password = document.getElementById("password").value;
+
+          // Add spinner
+          const spinner = document.createElement("span");
+          spinner.className = "spinner";
+          button.appendChild(spinner);
+          button.disabled = true;
 
           try {
             const response = await fetch(
@@ -121,6 +133,10 @@
             }
           } catch (err) {
             notyf.error("Network error. Please try again later.");
+          } finally {
+            // Remove spinner and re-enable button
+            spinner.remove();
+            button.disabled = false;
           }
         });
     </script>
