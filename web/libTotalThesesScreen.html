@@ -126,6 +126,10 @@
             <label for="keywords">Keywords</label>
             <textarea id="keywords" name="keywords"></textarea>
           </div>
+          <div class="form-group">
+            <label for="date_published">Date Published</label>
+            <input type="text" id="date_published" name="date_published" />
+          </div>
           <button type="submit" class="save-btn">Save Changes</button>
         </form>
       </div>
@@ -218,7 +222,6 @@
           }
 
           const theses = await response.json();
-          console.log("Theses data:", theses);
 
           if (!Array.isArray(theses)) {
             throw new Error("Expected array of theses");
@@ -328,7 +331,10 @@
           document.getElementById("authors").value = thesis.authors;
           document.getElementById("program_course").value =
             thesis.program_course;
-
+          document.getElementById("date_published").value =
+            thesis.date_published
+              ? new Date(thesis.date_published).toISOString().split("T")[0]
+              : "";
           document.getElementById("abstract").value = thesis.abstract || "";
           document.getElementById("keywords").value = thesis.keywords || "";
 
