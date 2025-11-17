@@ -181,9 +181,18 @@
                 access_location: "Online",
               }),
             }
-          ).catch((err) =>
-            console.error("Failed to record search history:", err)
-          );
+          )
+            .then(async (res) => {
+              if (!res.ok) {
+                const errorText = await res.text();
+                console.error("❌ Search history failed:", errorText);
+              } else {
+                console.log("✅ Search history saved.");
+              }
+            })
+            .catch((err) =>
+              console.error("🔥 Search history request error:", err)
+            );
 
           // Bookmark toggle button
           const bookmarkButton = document.getElementById("bookmarkButton");
@@ -215,7 +224,12 @@
                     }),
                   }
                 );
-                if (!res.ok) console.error("Failed to add bookmark");
+                if (!res.ok) {
+                  const errorText = await res.text();
+                  console.error("❌ Failed to add bookmark:", errorText);
+                } else {
+                  console.log("✅ Bookmark added successfully!");
+                }
                 console.log("Bookmark added successfully!");
               } else {
                 // Remove bookmark

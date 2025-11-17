@@ -39,7 +39,7 @@
       </nav>
 
       <div class="logout-link">
-        <a href="roleScreen.html"
+        <a href="#" onclick="logout()"
           ><i class="fas fa-sign-out-alt"></i
           ><span class="link-text">Logout</span></a
         >
@@ -226,6 +226,8 @@
         )
           .then((res) => (res.ok ? res.json() : []))
           .then((data) => {
+            console.log("search results", data);
+
             const historyEmpty = document.getElementById("historyEmpty");
             if (data && data.length > 0) {
               data.sort(
