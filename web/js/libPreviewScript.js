@@ -2,15 +2,14 @@ let stream = null;
 const video = document.getElementById("video");
 const canvas = document.getElementById("canvas");
 const capturedImage = document.getElementById("capturedImage");
-const captureBtn = document.getElementById("captureBtn");
 const retakeBtn = document.getElementById("retakeBtn");
-const scannedImagesContainer = document.getElementById(
-  "scannedImagesContainer"
-);
-const stepIndicator = document.getElementById("stepIndicator");
 const extractBtn = document.getElementById("extractBtn");
+const stepIndicator = document.getElementById("stepIndicator");
 const captureIndicator = document.getElementById("captureIndicator");
 const instructionText = document.getElementById("instructionText");
+const cropOverlay = document.getElementById("cropOverlay");
+// const overlayHint = document.getElementById("overlayHint");
+
 const notyf = new Notyf({
   position: { x: "right", y: "bottom" },
   ripple: true,
@@ -19,49 +18,103 @@ const notyf = new Notyf({
 });
 
 const steps = [
-  { name: "Title & Authors", multiple: false, fields: ["title", "authors"] },
+  { name: "Title", fields: ["title"] },
+  { name: "Authors", fields: ["authors"] },
   {
     name: "Program/Course & Date Published",
-    multiple: false,
     fields: ["program_course", "date_published"],
   },
-  { name: "Abstract", multiple: true, fields: ["abstract"] },
-  { name: "Keywords", multiple: false, fields: ["keywords"] },
+  { name: "Abstract", fields: ["abstract"] },
+  { name: "Keywords", fields: ["keywords"] },
 ];
 
-// Map stepIndex to OCR endpoint
 const ocrEndpoints = [
-  "/ocr/title-authors/", // Step 0
-  "/ocr/program-date/", // Step 1
-  "/ocr/abstract/", // Step 2
-  "/ocr/keywords/", // Step 3
+  "/ocr/title/",
+  "/ocr/authors/",
+  "/ocr/program-date/",
+  "/ocr/abstract/",
+  "/ocr/keywords/",
 ];
 
 let stepIndex = 0;
-let capturedByStep = [[], [], [], []]; // images per step
+let capturedByStep = [[], [], [], [], []];
+
+let cropStart = null;
+let cropRect = null;
 
 const token = localStorage.getItem("token");
-
-if (!token) {
-  window.location.href = "./";
-}
+if (!token) window.location.href = "./";
 
 function logout() {
   localStorage.removeItem("token");
   localStorage.removeItem("librarianId");
-  window.location.href = "index.html"; // send back to role selection
+  window.location.href = "index.html";
 }
 
-// --- Camera Setup ---
+// ---------------- Crop Handlers ----------------
+function resetCrop() {
+  if (cropRect) cropRect.remove();
+  cropRect = null;
+  cropStart = null;
+}
+
+cropOverlay.addEventListener("mousedown", (e) => {
+  resetCrop();
+  const rect = cropOverlay.getBoundingClientRect();
+  cropStart = { x: e.clientX - rect.left, y: e.clientY - rect.top };
+
+  cropRect = document.createElement("div");
+  cropRect.className = "crop-rect";
+  cropOverlay.appendChild(cropRect);
+});
+
+cropOverlay.addEventListener("mousemove", (e) => {
+  if (!cropStart || !cropRect) return;
+  const rect = cropOverlay.getBoundingClientRect();
+  const x = e.clientX - rect.left;
+  const y = e.clientY - rect.top;
+  cropRect.style.left = Math.min(x, cropStart.x) + "px";
+  cropRect.style.top = Math.min(y, cropStart.y) + "px";
+  cropRect.style.width = Math.abs(x - cropStart.x) + "px";
+  cropRect.style.height = Math.abs(y - cropStart.y) + "px";
+});
+
+cropOverlay.addEventListener("mouseup", () => {
+  cropStart = null;
+  if (!cropRect) return;
+
+  // overlayHint.style.display = "none"; // Hide hint
+
+  // Take snapshot of video as captured image
+  const ctx = canvas.getContext("2d");
+  canvas.width = video.videoWidth;
+  canvas.height = video.videoHeight;
+  ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+  const dataUrl = canvas.toDataURL("image/jpeg");
+
+  capturedByStep[stepIndex].push(dataUrl);
+  capturedImage.src = dataUrl;
+  capturedImage.style.display = "block";
+  video.style.display = "none";
+  captureIndicator.style.display = "inline-block";
+
+  // Show extract and retake buttons
+  extractBtn.style.display = "inline-block";
+  extractBtn.disabled = false;
+  retakeBtn.style.display = "inline-block";
+
+  instructionText.innerHTML = `
+  1. Make sure you highlighted <b>${steps[stepIndex].name}</b>.<br>
+  2. Click <b>Extract</b> to capture this field.<br>
+  3. If needed, click <b>Retake</b> to redo the crop.
+`;
+});
+
+// ---------------- Camera ----------------
 async function startCamera() {
   try {
     stream = await navigator.mediaDevices.getUserMedia({
-      video: {
-        width: { ideal: 3840 }, // 4K capture
-        height: { ideal: 2160 },
-        aspectRatio: { ideal: 1 / 1.414 }, // A4 shape
-        facingMode: { ideal: "environment" },
-      },
+      video: { width: 1920, height: 1080, facingMode: "environment" },
     });
     video.srcObject = stream;
     await video.play();
@@ -75,140 +128,113 @@ function stopCamera() {
   video.srcObject = null;
 }
 
+// ---------------- UI ----------------
 function updateStepUI() {
-  stepIndicator.innerHTML = ""; // clear old content
-
+  stepIndicator.innerHTML = "";
   steps.forEach((step, index) => {
     const btn = document.createElement("button");
     btn.textContent = step.name;
     btn.className = "step-btn";
     if (index === stepIndex) {
       btn.style.fontWeight = "bold";
-      btn.style.backgroundColor = "#0277bd"; // dark background for active step
-      btn.style.color = "#ffffff";
+      btn.style.backgroundColor = "#0277bd";
+      btn.style.color = "#fff";
     } else {
-      btn.style.fontWeight = "normal";
-      btn.style.backgroundColor = "#57a6d1"; // lighter shade
-      btn.style.color = "#ffffff";
+      btn.style.backgroundColor = "#57a6d1";
+      btn.style.color = "#fff";
     }
-
-    btn.addEventListener("click", () => {
-      jumpToStep(index);
-    });
+    btn.addEventListener("click", () => jumpToStep(index));
     stepIndicator.appendChild(btn);
   });
 
-  // Hide Extract initially
-  extractBtn.style.display = "none";
+  // overlayHint.style.display = "block";
+  // overlayHint.innerText = `Highlight ${steps[stepIndex].name}`;
 
-  instructionText.innerHTML =
-    `Capture <b>${steps[stepIndex].name}</b> and click <b>Extract</b>.<br>` +
-    `You can <b>Retake</b> if wrong.`;
+  capturedImage.style.display = "none";
+  video.style.display = "block";
+  extractBtn.style.display = "none";
+  retakeBtn.style.display = "none";
+  captureIndicator.style.display = "none";
+
+  //  User-friendly instruction
+  instructionText.innerHTML = `
+    <b>Step ${stepIndex + 1}: Highlight ${
+    steps[stepIndex].name
+  }</b> by dragging the green box over it.
+  `;
 }
 
 function jumpToStep(index) {
   stepIndex = index;
-
-  // Reset UI for that step
-  capturedImage.style.display = "none";
-  video.style.display = "block";
-  captureBtn.style.display = "inline-block";
-  retakeBtn.style.display = "none";
-  extractBtn.style.display = "inline-block";
-
-  // Remove the checkmark
-  captureIndicator.style.display = "none";
-
+  resetCrop();
   updateStepUI();
 }
 
-// --- Capture ---
-captureBtn.addEventListener("click", () => {
-  const ctx = canvas.getContext("2d");
-  canvas.width = video.videoWidth;
-  canvas.height = video.videoHeight;
-  ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-  const dataUrl = canvas.toDataURL("image/jpeg");
-
-  capturedByStep[stepIndex].push(dataUrl);
-
-  capturedImage.src = dataUrl;
-  capturedImage.style.display = "block";
-  video.style.display = "none";
-
-  // Show the checkmark indicator
-  captureIndicator.style.display = "inline-block";
-
-  // Hide capture, show retake & extract
-  captureBtn.style.display = "none";
-  retakeBtn.style.display = "inline-block";
-
-  //  Show Extract now that we have a capture
-  extractBtn.style.display = "inline-block";
-});
-
-// --- Retake ---
-retakeBtn.addEventListener("click", async () => {
+// ---------------- Retake ----------------
+retakeBtn.addEventListener("click", () => {
+  resetCrop();
   capturedImage.style.display = "none";
   video.style.display = "block";
-  captureBtn.style.display = "inline-block";
   retakeBtn.style.display = "none";
-
-  // Hide Extract because capture is gone
   extractBtn.style.display = "none";
-
   captureIndicator.style.display = "none";
+  // overlayHint.style.display = "block";
 
-  if (!stream) {
-    await startCamera();
-  } else {
-    video.srcObject = stream;
-    await video.play();
-  }
-
-  // Remove last captured image
   const lastImages = capturedByStep[stepIndex];
   if (lastImages.length > 0) lastImages.pop();
 });
 
-extractBtn.addEventListener("click", async () => {
-  // Hide Retake during extraction
-  retakeBtn.style.display = "none";
+// ---------------- Cropped Image ----------------
+async function getCroppedImage() {
+  if (!cropRect) return null;
 
-  await submitStepOCR();
+  const img = capturedImage;
+  const rect = cropRect.getBoundingClientRect();
+  const overlay = cropOverlay.getBoundingClientRect();
+  const scaleX = img.naturalWidth / overlay.width;
+  const scaleY = img.naturalHeight / overlay.height;
+  const cropX = (rect.left - overlay.left) * scaleX;
+  const cropY = (rect.top - overlay.top) * scaleY;
+  const cropW = rect.width * scaleX;
+  const cropH = rect.height * scaleY;
 
-  retakeBtn.style.display = "none";
-  extractBtn.style.display = "none";
-});
+  const c = document.createElement("canvas");
+  c.width = cropW;
+  c.height = cropH;
+  c.getContext("2d").drawImage(
+    img,
+    cropX,
+    cropY,
+    cropW,
+    cropH,
+    0,
+    0,
+    cropW,
+    cropH
+  );
 
+  return await new Promise((resolve) => c.toBlob(resolve, "image/jpeg"));
+}
+
+// ---------------- OCR ----------------
 async function submitStepOCR() {
   const stepImages = capturedByStep[stepIndex];
-  if (!stepImages.length) return;
-
-  const formData = new FormData();
-  for (let i = 0; i < stepImages.length; i++) {
-    const blob = await (await fetch(stepImages[i])).blob();
-    formData.append("images", blob, `step${stepIndex + 1}_page${i + 1}.jpg`);
-  }
+  if (!stepImages.length) return notyf.error("Please crop first!");
 
   extractBtn.disabled = true;
   extractBtn.innerHTML = `<span class="loader"></span> Extracting ${steps[stepIndex].name}...`;
 
   try {
-    const endpoint = `http://127.0.0.1:8000${ocrEndpoints[stepIndex]}`;
-    const response = await fetch(endpoint, {
-      method: "POST",
-      body: formData,
-    });
+    const formData = new FormData();
+    const croppedBlob = await getCroppedImage();
+    if (croppedBlob) formData.append("images", croppedBlob, "cropped.jpg");
+    else formData.append("images", await (await fetch(stepImages[0])).blob());
 
-    if (!response.ok) {
-      const errText = await response.text();
-      throw new Error(`OCR failed: ${errText}`);
-    }
+    const endpoint = `http://127.0.0.1:8000${ocrEndpoints[stepIndex]}`;
+    const response = await fetch(endpoint, { method: "POST", body: formData });
+    if (!response.ok) throw new Error(await response.text());
 
     const result = await response.json();
-
-    // Fill form fields
     steps[stepIndex].fields.forEach((field) => {
       const input = document.querySelector(`[name="${field}"]`);
       if (input && result[field] !== undefined && result[field] !== null) {
@@ -219,7 +245,6 @@ async function submitStepOCR() {
     notyf.success(
       `${steps[stepIndex].name} OCR complete. Accuracy: ${result.accuracy}%`
     );
-
     capturedByStep[stepIndex].accuracy = result.accuracy;
   } catch (err) {
     console.error(err);
@@ -227,49 +252,30 @@ async function submitStepOCR() {
   } finally {
     extractBtn.disabled = false;
     extractBtn.innerHTML = "Extract";
-
-    // Auto move to next step
     nextStep();
   }
 }
 
-// --- Move to next step ---
+extractBtn.addEventListener("click", submitStepOCR);
+
+// ---------------- Step Navigation ----------------
 function nextStep() {
   stepIndex++;
   if (stepIndex >= steps.length) {
     notyf.success(
       "All steps completed. You can now save the book information."
     );
-    captureBtn.style.display = "none";
-    retakeBtn.style.display = "none";
     extractBtn.style.display = "none";
-    captureIndicator.style.display = "none"; // hide checkmark
+    retakeBtn.style.display = "none";
+    captureIndicator.style.display = "none";
     return;
   }
+  resetCrop();
   updateStepUI();
-  capturedImage.style.display = "none";
-  video.style.display = "block";
-  captureBtn.style.display = "inline-block";
-  retakeBtn.style.display = "none";
-  extractBtn.style.display = "inline-block";
-  captureIndicator.style.display = "none"; // hide checkmark
 }
 
-// --- Reset form ---
-function resetForm() {
-  document.getElementById("bookForm").reset();
-  capturedByStep = [[], [], [], []];
-  stepIndex = 0;
-  updateStepUI();
-  capturedImage.style.display = "none";
-  video.style.display = "block";
-  captureBtn.style.display = "inline-block";
-  retakeBtn.style.display = "none";
-  startCamera();
-}
-
+// ---------------- Form Handling ----------------
 function convertMonthYearToDate(input) {
-  // Example: "January 2025"
   const months = {
     january: "01",
     february: "02",
@@ -284,24 +290,29 @@ function convertMonthYearToDate(input) {
     november: "11",
     december: "12",
   };
-
   if (!input) return null;
-
   const parts = input.trim().split(/\s+/);
-  if (parts.length !== 2) return input; // fallback: return as is
-
+  if (parts.length !== 2) return input;
   const monthName = parts[0].toLowerCase();
   const year = parts[1];
-
   if (!months[monthName] || isNaN(year)) return input;
-
   return `${year}-${months[monthName]}-01`;
 }
 
-// --- Form submission ---
+function resetForm() {
+  document.getElementById("bookForm").reset();
+  capturedByStep = [[], [], [], [], []];
+  stepIndex = 0;
+  resetCrop();
+  updateStepUI();
+  capturedImage.style.display = "none";
+  video.style.display = "block";
+  retakeBtn.style.display = "none";
+  startCamera();
+}
+
 document.getElementById("bookForm").addEventListener("submit", async (e) => {
   e.preventDefault();
-
   const form = e.target;
   const formData = new FormData(form);
 
@@ -316,7 +327,6 @@ document.getElementById("bookForm").addEventListener("submit", async (e) => {
   };
 
   try {
-    // 1️ Save thesis to backend
     const res = await fetch(
       "https://web-production-bfdc1d.up.railway.app/theses/add",
       {
@@ -325,16 +335,12 @@ document.getElementById("bookForm").addEventListener("submit", async (e) => {
         body: JSON.stringify(thesisData),
       }
     );
-
     if (!res.ok) throw new Error("Save failed");
 
-    // 2️ Get the new thesis ID from the response
     const savedThesis = await res.json();
     const thesisId = savedThesis.id;
-
-    // 3️ Build OCR record including the new thesis ID
     const record = {
-      thesis_id: thesisId, // ← store backend ID here
+      thesis_id: thesisId,
       title: formData.get("title"),
       author: formData.get("authors"),
       program: formData.get("program_course"),
@@ -349,7 +355,6 @@ document.getElementById("bookForm").addEventListener("submit", async (e) => {
       }),
     };
 
-    // 4️ Save OCR record to localStorage
     const existing = JSON.parse(localStorage.getItem("ocr_scans") || "[]");
     existing.push(record);
     localStorage.setItem("ocr_scans", JSON.stringify(existing));
@@ -362,7 +367,7 @@ document.getElementById("bookForm").addEventListener("submit", async (e) => {
   }
 });
 
-// --- Start camera ---
+// ---------------- Initialize ----------------
 window.onload = () => {
   updateStepUI();
   startCamera();

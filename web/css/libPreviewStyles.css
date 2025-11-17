@@ -149,6 +149,7 @@ h1 {
 .container {
   display: flex;
   gap: 30px;
+  /* flex-direction: column; */
   width: 100%;
   margin: 0 auto;
   padding: 20px;
@@ -320,8 +321,7 @@ textarea {
   position: absolute;
   top: 10px;
   right: 10px;
-  background: #28a745; /* green */
-  color: white;
+  background: #b0f9c1; /* green */
   font-size: 24px;
   font-weight: bold;
   padding: 5px 10px;
@@ -329,14 +329,6 @@ textarea {
   display: none; /* hidden by default */
   box-shadow: 0 0 5px rgba(0, 0, 0, 0.3);
   z-index: 10;
-}
-
-.preview .btn-capture {
-  background-color: #0288d1;
-  color: white;
-}
-.preview .btn-capture:hover {
-  background-color: #0277bd;
 }
 
 .preview .btn-retake {
@@ -348,17 +340,96 @@ textarea {
 }
 
 .preview .btn-extract {
-  background-color: #43a047;
+  background-color: #0288d1;
   color: white;
 }
 .preview .btn-extract:hover {
-  background-color: #388e3c;
+  background-color: #0277bd;
 }
 
-.preview .btn-proceed {
-  background-color: 0288d1;
-  color: white;
+.crop-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  cursor: crosshair;
 }
-.preview .btn-proceed:hover {
-  background-color: #0277bd;
+
+.crop-rect {
+  position: absolute;
+  border: 2px dashed #00e676;
+  background-color: rgba(0, 230, 118, 0.15);
+  pointer-events: none;
+  border-radius: 4px;
+}
+
+/* Crop Overlay Hint */
+.crop-overlay.required::before {
+  content: "Draw crop area to enable Extract";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: #fff;
+  background: rgba(0, 0, 0, 0.6);
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 14px;
+  pointer-events: none;
+  z-index: 5;
+}
+
+/* Capture Indicator (Checkmark) */
+.capture-indicator {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  font-size: 24px;
+  color: #4caf50;
+  font-weight: bold;
+  display: none; /* show only after capture */
+  z-index: 15;
+  text-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
+}
+
+/* Extract button disabled state */
+.preview .btn-extract:disabled {
+  cursor: not-allowed;
+}
+
+#overlayHint {
+  position: absolute;
+  top: 20px; /* distance from top of video */
+  left: 15px; /* center horizontally */
+  background-color: rgba(0, 0, 0, 0.6);
+  color: white;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 14px;
+  z-index: 20; /* above video and crop overlay */
+  pointer-events: none; /* allow cropping under the hint */
+  text-align: center;
+  max-width: 90%; /* wrap text if too long */
+}
+
+.loader {
+  border: 3px solid #f3f3f3; /* Light grey background */
+  border-top: 3px solid #111827; /* Blue spinner color */
+  border-radius: 50%;
+  width: 16px;
+  height: 16px;
+  animation: spin 1s linear infinite;
+  display: inline-block;
+  vertical-align: middle;
+  margin-right: 3px;
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
 }
