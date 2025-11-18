@@ -96,7 +96,7 @@
         try {
           // Fetch thesis details
           const res = await fetch(
-            `https://web-production-bfdc1d.up.railway.app/theses/${thesisId}`,
+            `https://thesis-scan-backend-production.up.railway.app/theses/${thesisId}`,
             {
               headers: { Authorization: `Bearer ${token}` },
             }
@@ -108,7 +108,7 @@
           let isBookmarked = false;
           try {
             const bookmarksRes = await fetch(
-              `https://web-production-bfdc1d.up.railway.app/users/bookmarks/${studentId}`,
+              `https://thesis-scan-backend-production.up.railway.app/users/bookmarks/${studentId}`,
               { headers: { Authorization: `Bearer ${token}` } }
             );
             if (bookmarksRes.ok) {
@@ -165,7 +165,7 @@
 
           // Record search history
           fetch(
-            "https://web-production-bfdc1d.up.railway.app/users/search-history/",
+            "https://thesis-scan-backend-production.up.railway.app/users/search-history/",
             {
               method: "POST",
               headers: {
@@ -207,7 +207,7 @@
               if (!nowBookmarked) {
                 // Add bookmark
                 const res = await fetch(
-                  "https://web-production-bfdc1d.up.railway.app/users/bookmarks/",
+                  "https://thesis-scan-backend-production.up.railway.app/users/bookmarks/",
                   {
                     method: "POST",
                     headers: {
@@ -234,7 +234,7 @@
               } else {
                 // Remove bookmark
                 const res = await fetch(
-                  `https://web-production-bfdc1d.up.railway.app/users/bookmarks/${studentId}/${thesis.id}`,
+                  `https://thesis-scan-backend-production.up.railway.app/users/bookmarks/${studentId}/${thesis.id}`,
                   {
                     method: "DELETE",
                     headers: { Authorization: `Bearer ${token}` },

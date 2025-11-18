@@ -161,7 +161,7 @@
         let user;
         try {
           const response = await fetch(
-            `https://web-production-bfdc1d.up.railway.app/users/${studentId}`,
+            `https://thesis-scan-backend-production.up.railway.app/users/${studentId}`,
             {
               headers: {
                 Authorization: `Bearer ${token}`,
@@ -186,7 +186,7 @@
 
         if (user.profile_picture) {
           profilePreview.src = user.profile_picture.startsWith("/static/")
-            ? `https://web-production-bfdc1d.up.railway.app${
+            ? `https://thesis-scan-backend-production.up.railway.app${
                 user.profile_picture
               }?t=${new Date().getTime()}`
             : user.profile_picture;
@@ -228,7 +228,7 @@
 
           try {
             const response = await fetch(
-              "https://web-production-bfdc1d.up.railway.app/users/update/",
+              "https://thesis-scan-backend-production.up.railway.app/users/update/",
               {
                 method: "POST",
                 body: formData,

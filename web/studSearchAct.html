@@ -222,7 +222,7 @@
 
         // Fetch search history
         fetch(
-          `https://web-production-bfdc1d.up.railway.app/users/search-history/${studentId}`
+          `https://thesis-scan-backend-production.up.railway.app/users/search-history/${studentId}`
         )
           .then((res) => (res.ok ? res.json() : []))
           .then((data) => {
@@ -249,7 +249,7 @@
 
         // Fetch bookmarks
         fetch(
-          `https://web-production-bfdc1d.up.railway.app/users/bookmarks/${studentId}`
+          `https://thesis-scan-backend-production.up.railway.app/users/bookmarks/${studentId}`
         )
           .then((res) => (res.ok ? res.json() : []))
           .then((data) => {

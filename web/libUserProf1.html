@@ -114,7 +114,7 @@
       async function fetchUserProfile() {
         try {
           const res = await fetch(
-            `https://web-production-bfdc1d.up.railway.app/users/${id}`,
+            `https://thesis-scan-backend-production.up.railway.app/users/${id}`,
             {
               headers: { Authorization: `Bearer ${token}` },
             }
@@ -131,7 +131,7 @@
           if (user.profile_picture) {
             document.getElementById("profile-picture").src =
               user.profile_picture.startsWith("/static/")
-                ? `https://web-production-bfdc1d.up.railway.app${
+                ? `https://thesis-scan-backend-production.up.railway.app${
                     user.profile_picture
                   }?t=${new Date().getTime()}`
                 : user.profile_picture;
@@ -149,7 +149,7 @@
 
           // Fetch bookmarks separately
           const bookmarkRes = await fetch(
-            `https://web-production-bfdc1d.up.railway.app/users/bookmarks/${user.student_id}`,
+            `https://thesis-scan-backend-production.up.railway.app/users/bookmarks/${user.student_id}`,
             {
               headers: { Authorization: `Bearer ${token}` },
             }
@@ -165,7 +165,7 @@
       async function fetchReadingHistory(studentId, page, size) {
         try {
           const res = await fetch(
-            `https://web-production-bfdc1d.up.railway.app/users/search-history/${studentId}`,
+            `https://thesis-scan-backend-production.up.railway.app/users/search-history/${studentId}`,
             {
               headers: { Authorization: `Bearer ${token}` },
             }

@@ -162,7 +162,7 @@
       async function fetchDashboardStats() {
         try {
           const response = await fetch(
-            "https://web-production-bfdc1d.up.railway.app/reports/stats/"
+            "https://thesis-scan-backend-production.up.railway.app/reports/stats/"
           );
           if (!response.ok) {
             throw new Error("Failed to fetch stats");
@@ -193,7 +193,7 @@
 
           // Fetch theses
           const response = await fetch(
-            "https://web-production-bfdc1d.up.railway.app/theses"
+            "https://thesis-scan-backend-production.up.railway.app/theses"
           );
 
           if (!response.ok) {

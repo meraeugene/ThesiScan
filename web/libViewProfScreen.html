@@ -115,7 +115,7 @@
 
         if (librarianId) {
           fetch(
-            `https://web-production-bfdc1d.up.railway.app/librarian/id/${librarianId}`
+            `https://thesis-scan-backend-production.up.railway.app/librarian/id/${librarianId}`
           )
             .then((response) => {
               if (!response.ok)
@@ -141,7 +141,7 @@
                 librarian.profile_picture.startsWith("/static/")
               ) {
                 profilePicture.src =
-                  "https://web-production-bfdc1d.up.railway.app" +
+                  "https://thesis-scan-backend-production.up.railway.app" +
                   librarian.profile_picture +
                   "?t=" +
                   new Date().getTime();

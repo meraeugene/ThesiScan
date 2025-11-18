@@ -142,7 +142,7 @@
 
 
     if (librarianId) {
-      fetch(`https://web-production-bfdc1d.up.railway.app/librarian/id/${librarianId}`)
+      fetch(`https://thesis-scan-backend-production.up.railway.app/librarian/id/${librarianId}`)
         .then((response) => {
           if (!response.ok) throw new Error("Failed to fetch librarian data");
           return response.json();
@@ -157,7 +157,7 @@
 
           // Handle profile picture
           if (librarian.profile_picture && librarian.profile_picture.startsWith('/static/')) {
-            profilePreview.src = 'https://web-production-bfdc1d.up.railway.app' + librarian.profile_picture + '?t=' + new Date().getTime();
+            profilePreview.src = 'https://thesis-scan-backend-production.up.railway.app' + librarian.profile_picture + '?t=' + new Date().getTime();
           } else {
             profilePreview.src = 'TS_librarian.png';
           }
@@ -194,7 +194,7 @@
       formData.set('username', document.getElementById('username').value);
 
       try {
-        const response = await fetch('https://web-production-bfdc1d.up.railway.app/librarian/update/', {
+        const response = await fetch('https://thesis-scan-backend-production.up.railway.app/librarian/update/', {
           method: 'POST',
           body: formData
         });

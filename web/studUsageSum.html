@@ -113,7 +113,7 @@
       try {
         // Fetch search history
         const searchRes = await fetch(
-          `https://web-production-bfdc1d.up.railway.app/users/search-history/${studentId}`
+          `https://thesis-scan-backend-production.up.railway.app/users/search-history/${studentId}`
         );
         const searchHistory = searchRes.ok ? await searchRes.json() : [];
         document.getElementById("searchCount").textContent =
@@ -141,7 +141,7 @@
 
         // Fetch bookmarks
         const bookmarkRes = await fetch(
-          `https://web-production-bfdc1d.up.railway.app/users/bookmarks/${studentId}`
+          `https://thesis-scan-backend-production.up.railway.app/users/bookmarks/${studentId}`
         );
         const bookmarks = bookmarkRes.ok ? await bookmarkRes.json() : [];
 
