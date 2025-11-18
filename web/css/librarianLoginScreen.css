@@ -12,7 +12,9 @@ body::before {
   left: 0;
   width: 100%;
   height: 100%;
-  opacity: 0.7;
+  z-index: -1;
+  background: url("../TS_bg.jpg") no-repeat center center/cover;
+  filter: blur(6px);
   z-index: -1;
 }
 

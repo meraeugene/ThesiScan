@@ -2,56 +2,133 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <title>ThesiScan</title>
-    <link rel="stylesheet" href="css/index.css" />
+    <title>ThesiScan - Login</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta property="og:title" content="ThesiScan" />
-    <meta
-      property="og:description"
-      content="Select your role to access ThesiScan."
-    />
-    <meta property="og:image" content="images/thumbnail.png" />
-    <meta property="og:url" content="https://thesis-scan.vercel.app/" />
-    <meta property="og:type" content="website" />
 
-    <style>
-      html,
-      body {
-        height: 100%;
-        font-family: "Segoe UI", sans-serif;
-        position: relative;
-        background: url("TS_bg.jpg") no-repeat center center;
-        background-size: cover;
-      }
-    </style>
+    <!-- Reuse existing login CSS -->
+    <link rel="stylesheet" href="css/studentLoginScreen.css" />
+
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/notyf@3/notyf.min.css"
+    />
   </head>
+
   <body>
     <!-- Logo -->
     <img src="images/main logo.png" alt="ThesiScan Logo" class="logo" />
 
-    <!-- Role Selection Box -->
-    <div class="container">
-      <h1>Select Your Role</h1>
-      <div class="role-images">
-        <div class="role-option" onclick="selectRole('Librarian')">
-          <img src="TS_librarian.png" alt="Librarian" class="role-image" />
-          <div class="label">Librarian</div>
+    <!-- Login Box -->
+    <div class="login-box">
+      <h2>Login</h2>
+
+      <form id="universalLoginForm">
+        <input
+          type="text"
+          id="username"
+          placeholder="Enter Student ID or Username"
+          required
+          autocomplete="username"
+        />
+
+        <div class="input-group">
+          <input
+            type="password"
+            id="password"
+            placeholder="Password"
+            required
+            autocomplete="current-password"
+          />
+          <button
+            type="button"
+            class="toggle-password"
+            onclick="togglePassword()"
+          >
+            <i id="eyeIcon" class="fa-solid fa-eye"></i>
+          </button>
         </div>
-        <div class="role-option" onclick="selectRole('Student')">
-          <img src="TS_student.png" alt="Student" class="role-image" />
-          <div class="label">Student</div>
-        </div>
+
+        <button type="submit" class="login-button">
+          <span class="btn-text"></span>Login
+        </button>
+      </form>
+      <div style="display: flex; justify-content: end; margin-top: 15px">
+        <a href="studForgotPass.html" class="forgot-password"
+          >Forgot Password?</a
+        >
       </div>
     </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/notyf@3/notyf.min.js"></script>
     <script>
-      function selectRole(role) {
-        if (role === "Librarian") {
-          window.location.href = "librarianLoginScreen.html";
-        } else if (role === "Student") {
-          window.location.href = "studentLoginScreen.html";
-        }
+      const notyf = new Notyf();
+
+      function togglePassword() {
+        const passwordField = document.getElementById("password");
+        const eyeIcon = document.getElementById("eyeIcon");
+        const isHidden = passwordField.type === "password";
+
+        passwordField.type = isHidden ? "text" : "password";
+        eyeIcon.classList.toggle("fa-eye");
+        eyeIcon.classList.toggle("fa-eye-slash");
       }
+
+      document
+        .getElementById("universalLoginForm")
+        .addEventListener("submit", async function (event) {
+          event.preventDefault();
+
+          const button = document.querySelector(".login-button");
+
+          const username = document.getElementById("username").value.trim();
+          const password = document.getElementById("password").value;
+
+          const formData = new FormData();
+          formData.append("username", username);
+          formData.append("password", password);
+
+          // Spinner
+          const spinner = document.createElement("span");
+          spinner.className = "spinner";
+          button.appendChild(spinner);
+          button.disabled = true;
+
+          try {
+            const response = await fetch(
+              "https://web-production-bfdc1d.up.railway.app/login/",
+              {
+                method: "POST",
+                body: formData,
+              }
+            );
+
+            if (response.ok) {
+              const data = await response.json();
+
+              localStorage.setItem("token", data.token);
+              //   localStorage.setItem("accountId", data.id);
+              //   localStorage.setItem("role", data.role);
+
+              // AUTO-REDIRECT BASED ON ROLE
+              if (data.role === "student") {
+                window.location.href = "studentDashboard.html";
+              } else if (data.role === "librarian") {
+                window.location.href = "librarianDashboard.html";
+              }
+            } else {
+              notyf.error("These credentials do not match our records.");
+            }
+          } catch (err) {
+            notyf.error("Network error. Please try again later.");
+          } finally {
+            spinner.remove();
+            button.disabled = false;
+          }
+        });
     </script>
   </body>
 </html>

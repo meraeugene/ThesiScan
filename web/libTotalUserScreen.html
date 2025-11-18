@@ -52,28 +52,55 @@
           <input type="text" placeholder="Search users by ID, Name..." />
           <button type="submit">Search</button>
         </div>
-        <button id="addUserBtn" class="add-btn">+ Add User</button>
+        <div style="gap: 10px; display: flex">
+          <button id="addStudentBtn" class="add-btn">+ Add Student</button>
+          <button id="addLibrarianBtn" class="add-btn">+ Add Librarian</button>
+        </div>
       </div>
 
       <div class="stats">
         <div class="stat-box">
-          <h3>420</h3>
+          <h3>0</h3>
           <p>Total Users</p>
         </div>
         <div class="stat-box">
-          <h3>128</h3>
+          <h3>0</h3>
           <p>Active This Week</p>
         </div>
         <div class="stat-box">
-          <h3>25</h3>
+          <h3>0</h3>
           <p>New Users</p>
         </div>
       </div>
 
       <div class="table-section">
-        <h3>Users</h3>
+        <h3>Librarians</h3>
         <div class="table-wrapper">
-          <table id="userTable">
+          <div class="loading" id="librarianLoading">
+            <span class="spinner"></span> Loading librarians...
+          </div>
+          <table id="librarianTable">
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Username</th>
+                <th>Email</th>
+                <th>Role</th>
+                <th class="actions-column">Actions</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="table-section" style="margin-top: 30px">
+        <h3>Students</h3>
+        <div class="table-wrapper">
+          <div class="loading" id="studentLoading">
+            <span class="spinner"></span> Loading students...
+          </div>
+          <table id="studentTable">
             <thead>
               <tr>
                 <th>Name</th>
@@ -87,7 +114,6 @@
             <tbody></tbody>
           </table>
         </div>
-        <div class="pagination" id="pagination"></div>
       </div>
     </div>
 
@@ -140,6 +166,16 @@
               autocomplete="current-password"
             />
           </div>
+
+          <!-- Librarian-specific fields -->
+          <div id="librarianFields" style="display: none">
+            <div class="form-group">
+              <label for="username">Username</label>
+              <input type="text" id="username" name="username" required />
+            </div>
+            <!-- Role is fixed, no select needed -->
+          </div>
+
           <button type="submit" class="save-btn">Create User</button>
         </form>
       </div>
@@ -159,6 +195,24 @@
         localStorage.removeItem("token");
         localStorage.removeItem("librarianId");
         window.location.href = "index.html"; // send back to role selection
+      }
+
+      function getTimeAgo(date) {
+        const now = new Date();
+        const loginDate = new Date(date);
+        const diffInMinutes = Math.floor((now - loginDate) / (1000 * 60));
+
+        if (diffInMinutes < 60) {
+          return `${diffInMinutes} min ago`;
+        }
+
+        const diffInHours = Math.floor(diffInMinutes / 60);
+        if (diffInHours < 24) {
+          return `${diffInHours} hour${diffInHours > 1 ? "s" : ""} ago`;
+        }
+
+        const diffInDays = Math.floor(diffInHours / 24);
+        return `${diffInDays} day${diffInDays > 1 ? "s" : ""} ago`;
       }
 
       document.addEventListener("DOMContentLoaded", async () => {
@@ -192,76 +246,102 @@
 
         // Fetch users data
         async function fetchUsers() {
+          const librarianLoading = document.getElementById("librarianLoading");
+          const studentLoading = document.getElementById("studentLoading");
+          const librarianTable = document.getElementById("librarianTable");
+          const studentTable = document.getElementById("studentTable");
+
+          // Show loading
+          librarianLoading.style.display = "flex";
+          studentLoading.style.display = "flex";
+          librarianTable.style.display = "none";
+          studentTable.style.display = "none";
+
           try {
-            const response = await fetch(
+            const resStudents = await fetch(
               "https://web-production-bfdc1d.up.railway.app/users/list/"
             );
-            const users = await response.json();
-            updateUserTable(users);
+            const students = await resStudents.json();
+
+            const resLibrarians = await fetch(
+              "https://web-production-bfdc1d.up.railway.app/librarians/list/"
+            );
+            const librarians = await resLibrarians.json();
+
+            updateStudentTable(students);
+            updateLibrarianTable(librarians);
           } catch (error) {
             console.error("Error fetching users:", error);
+          } finally {
+            // Hide loading and show tables
+            librarianLoading.style.display = "none";
+            studentLoading.style.display = "none";
+            librarianTable.style.display = "table";
+            studentTable.style.display = "table";
           }
         }
 
-        function getTimeAgo(date) {
-          const now = new Date();
-          const loginDate = new Date(date);
-          const diffInMinutes = Math.floor((now - loginDate) / (1000 * 60));
-
-          if (diffInMinutes < 60) {
-            return `${diffInMinutes} min ago`;
-          }
-
-          const diffInHours = Math.floor(diffInMinutes / 60);
-          if (diffInHours < 24) {
-            return `${diffInHours} hour${diffInHours > 1 ? "s" : ""} ago`;
-          }
-
-          const diffInDays = Math.floor(diffInHours / 24);
-          return `${diffInDays} day${diffInDays > 1 ? "s" : ""} ago`;
-        }
-
-        function updateUserTable(users) {
-          const tbody = document.querySelector("#userTable tbody");
+        // Update student table
+        function updateStudentTable(students) {
+          const tbody = document.querySelector("#studentTable tbody");
           tbody.innerHTML = "";
 
-          users.forEach((user) => {
+          students.forEach((student) => {
             const row = document.createElement("tr");
-
-            // Row click navigates to profile
-            row.onclick = (e) => {
-              if (!e.target.classList.contains("delete-btn")) {
-                window.location.href = `libUserProf1.html?id=${user.id}`;
-              }
-            };
-
-            const timeAgo = user.last_login
-              ? getTimeAgo(user.last_login)
-              : "Never";
-
             row.innerHTML = `
-      <td>${user.full_name}</td>
-      <td>${user.student_id}</td>
-      <td>${user.program_course}</td>
-      <td>${user.year_level}</td>
-      <td>${timeAgo}</td>
+      <td>${student.full_name}</td>
+      <td>${student.student_id}</td>
+      <td>${student.program_course}</td>
+      <td>${student.year_level}</td>
+      <td>${student.last_login ? getTimeAgo(student.last_login) : "Never"}</td>
       <td>
-        <button class="delete-btn" data-id="${user.id}">Delete</button>
+        <button class="delete-btn" data-id="${
+          student.id
+        }" data-role="student">Delete</button>
       </td>
     `;
-
             tbody.appendChild(row);
           });
 
-          // Attach delete handlers
-          document.querySelectorAll(".delete-btn").forEach((btn) => {
+          attachDeleteHandlers("#studentTable tbody .delete-btn");
+        }
+
+        // Update librarian table
+        function updateLibrarianTable(librarians) {
+          const tbody = document.querySelector("#librarianTable tbody");
+          tbody.innerHTML = "";
+
+          librarians.forEach((librarian) => {
+            const row = document.createElement("tr");
+            row.innerHTML = `
+      <td>${librarian.full_name}</td>
+      <td>${librarian.username}</td>
+      <td>${librarian.email}</td>
+      <td>${librarian.role}</td>
+      <td>
+        <button class="delete-btn" data-id="${librarian.id}" data-role="librarian">Delete</button>
+      </td>
+    `;
+            tbody.appendChild(row);
+          });
+
+          attachDeleteHandlers("#librarianTable tbody .delete-btn");
+        }
+
+        // Attach delete handlers
+        function attachDeleteHandlers(selector) {
+          document.querySelectorAll(selector).forEach((btn) => {
             btn.addEventListener("click", async (e) => {
-              e.stopPropagation(); // prevent row click
+              e.stopPropagation();
               const userId = btn.dataset.id;
+              const role = btn.dataset.role;
+
               if (confirm("Are you sure you want to delete this user?")) {
                 try {
                   const res = await fetch(
-                    `https://web-production-bfdc1d.up.railway.app/users/${userId}`,
+                    `https://web-production-bfdc1d.up.railway.app/${
+                      role === "librarian" ? "librarians" : "users"
+                    }/${userId}`,
                     {
                       method: "DELETE",
                       headers: { Authorization: `Bearer ${token}` },
@@ -269,7 +349,7 @@
                   );
                   if (!res.ok) throw new Error("Failed to delete user");
                   notyf.success("User deleted successfully!");
-                  await fetchUsers(); // reload table
+                  await fetchUsers();
                 } catch (err) {
                   console.error(err);
                   notyf.error("Error deleting user.");
@@ -277,8 +357,6 @@
               }
             });
           });
-
-          setupPagination();
         }
 
         function setupPagination() {
@@ -362,12 +440,55 @@
 
         // Modal handling
         const addUserModal = document.getElementById("addUserModal");
-        const addUserBtn = document.getElementById("addUserBtn");
+        const addStudentBtn = document.getElementById("addStudentBtn");
+        const addLibrarianBtn = document.getElementById("addLibrarianBtn");
         const closeBtn = addUserModal.querySelector(".close");
         const addUserForm = document.getElementById("addUserForm");
 
-        // Open modal
-        addUserBtn.onclick = () => (addUserModal.style.display = "block");
+        let currentRole = "student"; // default
+
+        // Open modal for Student
+        addStudentBtn.onclick = () => {
+          currentRole = "student";
+
+          // Show student fields
+          ["student_id", "program_course", "year_level"].forEach((id) => {
+            const el = document.getElementById(id);
+            el.parentElement.style.display = "";
+            el.disabled = false;
+          });
+
+          // Hide librarian fields
+          document.getElementById("librarianFields").style.display = "none";
+          document
+            .querySelectorAll("#librarianFields input, #librarianFields select")
+            .forEach((el) => (el.disabled = true));
+
+          addUserModal.querySelector("h2").textContent = "Add Student";
+          addUserModal.style.display = "block";
+        };
+
+        // Open modal for Librarian
+        addLibrarianBtn.onclick = () => {
+          currentRole = "librarian";
+
+          // Hide student fields
+          ["student_id", "program_course", "year_level"].forEach((id) => {
+            const el = document.getElementById(id);
+            el.parentElement.style.display = "none";
+            el.disabled = true;
+          });
+
+          // Show librarian fields
+          const librarianFields = document.getElementById("librarianFields");
+          librarianFields.style.display = "";
+          librarianFields
+            .querySelectorAll("input, select")
+            .forEach((el) => (el.disabled = false));
+
+          addUserModal.querySelector("h2").textContent = "Add Librarian";
+          addUserModal.style.display = "block";
+        };
 
         // Close modal
         closeBtn.onclick = () => (addUserModal.style.display = "none");
@@ -380,42 +501,64 @@
         addUserForm.onsubmit = async (e) => {
           e.preventDefault();
 
+          const submitButton = addUserForm.querySelector(
+            "button[type='submit']"
+          );
+          submitButton.disabled = true;
+
+          // Add spinner element
+          const spinner = document.createElement("span");
+          spinner.className = "button-spinner";
+          submitButton.appendChild(spinner);
+
           const formData = {
             full_name: document.getElementById("full_name").value,
-            student_id: document.getElementById("student_id").value,
-            program_course: document.getElementById("program_course").value,
-            year_level: document.getElementById("year_level").value,
             email: document.getElementById("email").value,
             password: document.getElementById("password").value,
           };
 
+          if (currentRole === "student") {
+            formData.student_id = document.getElementById("student_id").value;
+            formData.program_course =
+              document.getElementById("program_course").value;
+            formData.year_level = document.getElementById("year_level").value;
+          } else if (currentRole === "librarian") {
+            formData.username = document.getElementById("username").value;
+            formData.role = "librarian";
+          }
+
+          const endpoint =
+            currentRole === "librarian"
+              ? "https://web-production-bfdc1d.up.railway.app/librarian/"
+              : "https://web-production-bfdc1d.up.railway.app/users/";
+
           try {
-            const response = await fetch(
-              "https://web-production-bfdc1d.up.railway.app/users/",
-              {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(formData),
-              }
-            );
+            const response = await fetch(endpoint, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(formData),
+            });
 
             if (!response.ok) {
               const errorData = await response.json();
               throw new Error(errorData.detail || "Failed to create user");
             }
 
-            // Success
             addUserModal.style.display = "none";
-            notyf.success("User added successfully!");
+            notyf.success(
+              `${
+                currentRole === "librarian" ? "Librarian" : "Student"
+              } added successfully!`
+            );
 
-            // Reset form
             addUserForm.reset();
-
-            // Reload users table
             await fetchUsers();
           } catch (error) {
             console.error("Error adding user:", error);
             notyf.error(error.message);
+          } finally {
+            submitButton.disabled = false;
+            spinner.remove(); // remove spinner when done
           }
         };
 

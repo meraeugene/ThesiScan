@@ -10,20 +10,6 @@
       rel="stylesheet"
       href="https://cdn.jsdelivr.net/npm/notyf@3/notyf.min.css"
     />
-    <style>
-      body {
-        font-family: "Segoe UI", sans-serif;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        min-height: 100vh;
-        margin: 0;
-        background: url("TS_bg.jpg") no-repeat center center;
-        background-size: cover;
-        flex-direction: column;
-        gap: 40px;
-      }
-    </style>
   </head>
   <body>
     <img src="images/main logo.png" alt="ThesiScan Logo" class="logo" />
@@ -36,14 +22,13 @@
           <span class="btn-text">Send Reset Link</span>
         </button>
       </form>
-      <a href="studentLoginScreen.html" class="back-link">← Back to Login</a>
+      <a href="./" class="back-link">← Back to Login</a>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/notyf@3/notyf.min.js"></script>
     <script>
       const notyf = new Notyf();
 
-      // const BACKEND_FORGOT = "http://127.0.0.1:8000/forgot-password/";
       const BACKEND_FORGOT =
         "https://web-production-bfdc1d.up.railway.app/forgot-password/";
 
