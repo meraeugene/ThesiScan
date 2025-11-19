@@ -65,7 +65,7 @@
                 <th>Book Title</th>
                 <th>Author</th>
                 <th>Date Accessed</th>
-                <th>Access Location</th>
+                <!-- <th>Access Location</th> -->
               </tr>
             </thead>
             <tbody id="historyBody"></tbody>
@@ -237,7 +237,9 @@
                 const date = new Date(item.date_accessed)
                   .toISOString()
                   .split("T")[0];
-                return `<td>${item.book_title}</td><td>${item.author}</td><td>${date}</td><td>${item.access_location}</td>`;
+                return `<td>${item.book_title}</td>
+                <td>${item.author}</td><td>${date}</td>
+                <!-- <td>${item.access_location}</td> -->`;
               });
               historyEmpty.style.display = "none";
             } else historyEmpty.style.display = "block";

@@ -67,6 +67,11 @@
         </div>
       </div>
 
+      <div class="table-controls">
+        <button id="showActiveBtn" class="action-btn">Active Theses</button>
+        <button id="showDeletedBtn" class="action-btn">Deleted Theses</button>
+      </div>
+
       <div class="table-section">
         <h3>Theses Uploaded</h3>
         <div class="table-wrapper" style="max-height: 600px; overflow-y: auto">
@@ -198,46 +203,26 @@
       }
 
       // Function to fetch and update theses table
-      async function fetchRecentUploads() {
+      async function fetchRecentUploads(showDeleted = false) {
         const tableBody = document.getElementById("thesesTableBody");
 
         try {
-          // Show loading state
-          tableBody.innerHTML = `
-          <tr>
-            <td colspan="5" style="text-align: center;">
-              <div style="padding: 20px;">
-                <i class="fas fa-spinner fa-spin"></i>
-                <p style="margin-top: 10px;">Loading theses data...</p>
-              </div>
-            </td>
-          </tr>
-        `;
+          tableBody.innerHTML = `<tr><td colspan="5" style="text-align:center;">Loading theses...</td></tr>`;
 
-          const response = await fetch(
-            "https://thesis-scan-backend-production.up.railway.app/theses"
-          );
-          if (!response.ok) {
-            throw new Error("Failed to fetch theses");
-          }
+          const url = showDeleted
+            ? "https://thesis-scan-backend-production.up.railway.app/theses/deleted"
+            : "https://thesis-scan-backend-production.up.railway.app/theses";
+
+          const response = await fetch(url);
+          if (!response.ok) throw new Error("Failed to fetch theses");
 
           const theses = await response.json();
 
-          if (!Array.isArray(theses)) {
-            throw new Error("Expected array of theses");
-          }
-
-          if (theses.length === 0) {
+          if (!Array.isArray(theses) || theses.length === 0) {
             tableBody.innerHTML = `
-            <tr>
-              <td colspan="5" style="text-align: center;">
-                <div style="padding: 20px;">
-                  <i class="fas fa-info-circle"></i>
-                  <p style="margin-top: 10px;">No theses available</p>
-                </div>
-              </td>
-            </tr>
-          `;
+        <tr>
+          <td colspan="5" style="text-align:center;">No theses available</td>
+        </tr>`;
             return;
           }
 
@@ -246,51 +231,66 @@
 
           // Build table rows
           const rows = sortedTheses
-            .map(
-              (thesis) => `
-          <tr>
-            <td><a href="libThesisDets.html?thesis_id=${
-              thesis.id
-            }" class="book-link">${thesis.title || "Untitled"}</a></td>
-            <td>${thesis.authors || "Unknown"}</td>
-            <td>${thesis.program_course || "N/A"}</td>
-            <td>${
-              thesis.date_published
-                ? new Date(thesis.date_published).getFullYear()
-                : "N/A"
-            }</td>
-            <td>
-              <button class="action-btn edit-btn" onclick="editThesis(${
-                thesis.id
-              })">Edit</button>
-              <button class="action-btn delete-btn" onclick="deleteThesis(${
-                thesis.id
-              })">Delete</button>
-            </td>
-          </tr>
-        `
-            )
+            .map((thesis) => {
+              const actions = showDeleted
+                ? `<button class="action-btn restore-btn" onclick="restoreThesis(${thesis.id})">Restore</button>`
+                : `
+          <button class="action-btn edit-btn" onclick="editThesis(${thesis.id})">Edit</button>
+          <button class="action-btn delete-btn" onclick="deleteThesis(${thesis.id})">Delete</button>`;
+
+              return `
+        <tr>
+          <td><a href="libThesisDets.html?thesis_id=${
+            thesis.id
+          }" class="book-link">${thesis.title || "Untitled"}</a></td>
+          <td>${thesis.authors || "Unknown"}</td>
+          <td>${thesis.program_course || "N/A"}</td>
+          <td>${
+            thesis.date_published
+              ? new Date(thesis.date_published).getFullYear()
+              : "N/A"
+          }</td>
+          <td>${actions}</td>
+        </tr>`;
+            })
             .join("");
 
-          // Update table
           tableBody.innerHTML = rows;
         } catch (error) {
           console.error("Error loading theses:", error);
-          tableBody.innerHTML = `
-          <tr>
-            <td colspan="5" style="text-align: center;">
-              <div style="color: #dc3545; padding: 20px;">
-                <i class="fas fa-exclamation-circle"></i>
-                <p style="margin: 10px 0;">Failed to load data</p>
-                <button onclick="fetchRecentUploads()" class="action-btn" style="background: #0288D1">
-                  Retry
-                </button>
-              </div>
-            </td>
-          </tr>
-        `;
+          tableBody.innerHTML = `<tr><td colspan="5" style="text-align:center;color:red;">Failed to load data</td></tr>`;
         }
       }
+
+      // Function to restore deleted thesis
+      async function restoreThesis(id) {
+        try {
+          const response = await fetch(
+            `https://thesis-scan-backend-production.up.railway.app/theses/${id}/restore`,
+            { method: "PUT" }
+          );
+
+          if (!response.ok) {
+            const error = await response.json();
+            notyf.error("Error restoring thesis: " + error.detail);
+            return;
+          }
+
+          notyf.success("Thesis restored successfully");
+          fetchRecentUploads(true); // Refresh deleted table
+          fetchDashboardStats();
+        } catch (error) {
+          console.error("Error:", error);
+          notyf.error("Error restoring thesis. Please try again.");
+        }
+      }
+
+      document
+        .getElementById("showActiveBtn")
+        .addEventListener("click", () => fetchRecentUploads(false));
+      document
+        .getElementById("showDeletedBtn")
+        .addEventListener("click", () => fetchRecentUploads(true));
 
       // Function to handle search
       function handleSearch() {

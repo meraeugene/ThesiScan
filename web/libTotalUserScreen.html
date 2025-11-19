@@ -49,8 +49,12 @@
       <div class="top-bar">
         <h3 class="page-title">Total Users</h3>
         <div class="search-bar">
-          <input type="text" placeholder="Search users by ID, Name..." />
-          <button type="submit">Search</button>
+          <input
+            id="globalSearch"
+            type="text"
+            placeholder="Search users by ID, Name..."
+          />
+          <button id="globalSearchBtn" type="submit">Search</button>
         </div>
         <div style="gap: 10px; display: flex">
           <button id="addStudentBtn" class="add-btn">+ Add Student</button>
@@ -420,23 +424,26 @@
         }
 
         // Initialize search functionality
-        const searchInput = document.querySelector(".search-bar input");
-        const searchButton = document.querySelector(".search-bar button");
+        const searchInput = document.getElementById("globalSearch");
+        const searchBtn = document.getElementById("globalSearchBtn");
 
-        function handleSearch() {
-          const searchTerm = searchInput.value.toLowerCase();
-          const rows = document.querySelectorAll("#userTable tbody tr");
+        function runSearch() {
+          const term = searchInput.value.toLowerCase();
 
-          rows.forEach((row) => {
-            const text = row.textContent.toLowerCase();
-            row.style.display = text.includes(searchTerm) ? "" : "none";
+          const allRows = [
+            ...document.querySelectorAll("#studentTable tbody tr"),
+            ...document.querySelectorAll("#librarianTable tbody tr"),
+          ];
+
+          allRows.forEach((row) => {
+            row.style.display = row.textContent.toLowerCase().includes(term)
+              ? ""
+              : "none";
           });
         }
 
-        searchButton.addEventListener("click", handleSearch);
-        searchInput.addEventListener("keypress", (e) => {
-          if (e.key === "Enter") handleSearch();
-        });
+        searchBtn.onclick = runSearch;
+        searchInput.onkeyup = runSearch;
 
         // Modal handling
         const addUserModal = document.getElementById("addUserModal");
