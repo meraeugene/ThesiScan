@@ -233,7 +233,7 @@
           const rows = sortedTheses
             .map((thesis) => {
               const actions = showDeleted
-                ? `<button class="action-btn restore-btn" onclick="restoreThesis(${thesis.id})">Restore</button>`
+                ? `<button class="action-btn restore-btn" id="restore-btn" onclick="restoreThesis(${thesis.id})">Restore</button>`
                 : `
           <button class="action-btn edit-btn" onclick="editThesis(${thesis.id})">Edit</button>
           <button class="action-btn delete-btn" onclick="deleteThesis(${thesis.id})">Delete</button>`;

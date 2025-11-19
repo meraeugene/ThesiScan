@@ -98,12 +98,21 @@ body {
 
 /* Deleted Theses Button */
 #showDeletedBtn {
-  background-color: #f44336;
+  background-color: #c82333;
   color: white;
 }
 
 #showDeletedBtn:hover {
-  background-color: #d32f2f;
+  background-color: #a71d2a;
+}
+
+#restore-btn {
+  background-color: #4caf50;
+  color: white;
+}
+
+#restore-btn:hover {
+  background-color: #45a049;
 }
 
 .nav-links,
