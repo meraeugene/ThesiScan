@@ -9,12 +9,13 @@
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
     />
     <link rel="stylesheet" href="css/studUsageSum.css" />
+    <link rel="icon" type="image/png" href="images/FINAL_sub-logo.png" />
   </head>
   <body>
     <!-- Sidebar -->
     <div class="sidebar">
       <div class="logo">
-        <img src="images/sub logo.png" />
+        <img src="images/FINAL_sub-logo.png" />
         <span class="logo-text">ThesiScan</span>
       </div>
 
@@ -60,13 +61,14 @@
             <h3 id="bookmarkCount">0</h3>
             <p>Total Theses Bookmarked</p>
           </div>
-          <div class="stat-box" id="onCampusCountBox">
-            <h3 id="onCampusCount">0</h3>
-            <p>Theses Accessed On-Campus</p>
+          <div class="stat-box" id="weeklyViewsBox">
+            <h3 id="weeklyViews">0</h3>
+            <p>Theses Viewed This Week</p>
           </div>
-          <div class="stat-box" id="offCampusCountBox">
-            <h3 id="offCampusCount">0</h3>
-            <p>Theses Accessed Off-Campus</p>
+
+          <div class="stat-box" id="totalSearchesBox">
+            <h3 id="totalSearches">0</h3>
+            <p>Total Searches Made</p>
           </div>
         </div>
 
@@ -119,25 +121,29 @@
         document.getElementById("searchCount").textContent =
           searchHistory.length;
 
-        // Count On-Campus and Off-Campus
-        let onCampus = 0,
-          offCampus = 0;
-        let firstDate = null,
-          lastDate = null;
+        // Calculate weekly views
+        let weeklyViews = 0;
+
+        // Determine start of the current week (Monday)
+        const todayDate = new Date();
+        const dayOfWeek = todayDate.getDay();
+        const mondayOffset = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+        const weekStart = new Date(todayDate);
+        weekStart.setDate(todayDate.getDate() - mondayOffset);
+        weekStart.setHours(0, 0, 0, 0);
+
+        // Count weekly views
         searchHistory.forEach((h) => {
-          if ((h.access_location || "").toLowerCase().includes("on-campus"))
-            onCampus++;
-          if ((h.access_location || "").toLowerCase().includes("off-campus"))
-            offCampus++;
-          // Track first and last search dates
           if (h.date_accessed) {
-            const d = new Date(h.date_accessed);
-            if (!firstDate || d < firstDate) firstDate = d;
-            if (!lastDate || d > lastDate) lastDate = d;
+            const accessedDate = new Date(h.date_accessed);
+            if (accessedDate >= weekStart) weeklyViews++;
           }
         });
-        document.getElementById("onCampusCount").textContent = onCampus;
-        document.getElementById("offCampusCount").textContent = offCampus;
+
+        // Update UI
+        document.getElementById("weeklyViews").textContent = weeklyViews;
+        document.getElementById("totalSearches").textContent =
+          searchHistory.length;
 
         // Fetch bookmarks
         const bookmarkRes = await fetch(

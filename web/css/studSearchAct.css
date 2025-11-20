@@ -11,6 +11,16 @@ body {
   display: flex;
 }
 
+.row-link {
+  color: inherit;
+  text-decoration: none;
+}
+
+#historyTable tr,
+#bookmarksTable tr {
+  cursor: pointer;
+}
+
 .sidebar {
   width: 70px;
   height: 100vh;
@@ -34,7 +44,7 @@ body {
 
 .sidebar .logo {
   width: 100%;
-  height: 80px;
+  height: 90px;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -55,7 +65,7 @@ body {
 
 .logo-text {
   position: absolute;
-  left: 80px;
+  left: 70px;
   color: #0288d1;
   font-weight: 600;
   font-size: 18px;

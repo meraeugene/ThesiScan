@@ -5,6 +5,7 @@
     <title>ThesiScan - Login</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta property="og:title" content="ThesiScan" />
+    <link rel="icon" type="image/png" href="images/FINAL_sub-logo.png" />
     <meta
       property="og:description"
       content="ThesiScan is a web application that allows students to easily scan and upload their thesis documents for review and approval. And students can view thesis scanned by the librarian"
@@ -28,7 +29,7 @@
 
   <body>
     <!-- Logo -->
-    <img src="images/main logo.png" alt="ThesiScan Logo" class="logo" />
+    <img src="images/FINAL_main-logo.png" alt="ThesiScan Logo" class="logo" />
 
     <!-- Login Box -->
     <div class="login-box">
@@ -73,6 +74,31 @@
 
     <script src="https://cdn.jsdelivr.net/npm/notyf@3/notyf.min.js"></script>
     <script>
+      // Check if user is already logged in
+      const token = localStorage.getItem("token");
+
+      if (token) {
+        try {
+          // Optional: decode JWT to check role
+          const parseJwt = (token) => {
+            const base64Url = token.split(".")[1];
+            const base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
+            return JSON.parse(atob(base64));
+          };
+
+          const decoded = parseJwt(token);
+
+          if (decoded.role === "student") {
+            window.location.href = "studentDashboard.html";
+          } else if (decoded.role === "librarian") {
+            window.location.href = "librarianDashboard.html";
+          }
+        } catch (err) {
+          // If token is invalid, remove it
+          localStorage.removeItem("token");
+        }
+      }
+
       const notyf = new Notyf();
 
       function togglePassword() {

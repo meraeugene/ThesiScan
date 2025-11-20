@@ -10,7 +10,6 @@ body {
   min-height: 100vh;
   margin: 0;
   flex-direction: column;
-  gap: 40px;
 }
 
 body::before {
@@ -27,7 +26,8 @@ body::before {
 }
 
 .logo {
-  width: 400px;
+  height: 150px;
+  object-fit: cover;
 }
 
 .reset-box {

@@ -9,12 +9,13 @@
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
     />
     <link rel="stylesheet" href="css/studSearchAct.css" />
+    <link rel="icon" type="image/png" href="images/FINAL_sub-logo.png" />
   </head>
   <body>
     <!-- Sidebar -->
     <div class="sidebar">
       <div class="logo">
-        <img src="images/sub logo.png" />
+        <img src="images/FINAL_sub-logo.png" />
         <span class="logo-text">ThesiScan</span>
       </div>
 
@@ -165,8 +166,16 @@
             data.slice(start, end).forEach((item) => {
               const tr = document.createElement("tr");
               tr.innerHTML = columns(item);
+
+              // Make row clickable
+              tr.style.cursor = "pointer";
+              tr.addEventListener("click", () => {
+                window.location.href = `studBookDets1.html?thesis_id=${item.thesis_id}`;
+              });
+
               tbody.appendChild(tr);
             });
+
             renderPagination();
           }
 
@@ -237,9 +246,11 @@
                 const date = new Date(item.date_accessed)
                   .toISOString()
                   .split("T")[0];
-                return `<td>${item.book_title}</td>
-                <td>${item.author}</td><td>${date}</td>
-                <!-- <td>${item.access_location}</td> -->`;
+                return `
+        <td>${item.book_title}</td>
+        <td>${item.author}</td>
+        <td>${date}</td>
+      `;
               });
               historyEmpty.style.display = "none";
             } else historyEmpty.style.display = "block";
@@ -272,8 +283,12 @@
                 bookmarksArray,
                 "bookmarksBody",
                 "bookmarksPagination",
-                (item) =>
-                  `<td>${item.thesis_title}</td><td>${item.author}</td><td>${item.program}</td><td>${item.date_bookmarked}</td>`
+                (item) => `
+  <td>${item.thesis_title}</td>
+  <td>${item.author}</td>
+  <td>${item.program}</td>
+  <td>${item.date_bookmarked}</td>
+`
               );
               bookmarksEmpty.style.display = "none";
             } else bookmarksEmpty.style.display = "block";
