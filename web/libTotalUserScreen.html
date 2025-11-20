@@ -267,8 +267,6 @@
             );
             const students = await resStudents.json();
 
-            console.log(students);
-
             const resLibrarians = await fetch(
               "https://thesis-scan-backend-production.up.railway.app/librarians/list/"
             );
@@ -313,18 +311,6 @@
 
           attachDeleteHandlers("#studentTable tbody .delete-btn");
         }
-
-        function refreshLastLogins() {
-          document.querySelectorAll(".last-login").forEach((el) => {
-            const timestamp = el.dataset.login;
-            if (timestamp) {
-              el.textContent = getTimeAgo(timestamp);
-            }
-          });
-        }
-
-        // Update every 60 seconds
-        setInterval(refreshLastLogins, 60000);
 
         // Update librarian table
         function updateLibrarianTable(librarians) {
@@ -554,6 +540,7 @@
             currentRole === "librarian"
               ? "https://thesis-scan-backend-production.up.railway.app/librarian/"
               : "https://thesis-scan-backend-production.up.railway.app/users/";
+          // "http://127.0.0.1:8000/users/";
 
           try {
             const response = await fetch(endpoint, {
