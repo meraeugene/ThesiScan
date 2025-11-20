@@ -205,19 +205,18 @@
       function getTimeAgo(date) {
         const now = new Date();
         const loginDate = new Date(date);
-        const diffInMinutes = Math.floor((now - loginDate) / (1000 * 60));
+        const diffMs = now - loginDate;
 
-        if (diffInMinutes < 60) {
-          return `${diffInMinutes} min ago`;
-        }
+        const minutes = Math.floor(diffMs / 1000 / 60);
+        const hours = Math.floor(minutes / 60);
+        const days = Math.floor(hours / 24);
+        const weeks = Math.floor(days / 7);
 
-        const diffInHours = Math.floor(diffInMinutes / 60);
-        if (diffInHours < 24) {
-          return `${diffInHours} hour${diffInHours > 1 ? "s" : ""} ago`;
-        }
-
-        const diffInDays = Math.floor(diffInHours / 24);
-        return `${diffInDays} day${diffInDays > 1 ? "s" : ""} ago`;
+        if (minutes < 1) return "Just now";
+        if (minutes < 60) return `${minutes} min${minutes > 1 ? "s" : ""} ago`;
+        if (hours < 24) return `${hours} hour${hours > 1 ? "s" : ""} ago`;
+        if (days < 7) return `${days} day${days > 1 ? "s" : ""} ago`;
+        return `${weeks} week${weeks > 1 ? "s" : ""} ago`;
       }
 
       document.addEventListener("DOMContentLoaded", async () => {
@@ -268,6 +267,8 @@
             );
             const students = await resStudents.json();
 
+            console.log(students);
+
             const resLibrarians = await fetch(
               "https://thesis-scan-backend-production.up.railway.app/librarians/list/"
             );
@@ -298,7 +299,9 @@
       <td>${student.student_id}</td>
       <td>${student.program_course}</td>
       <td>${student.year_level}</td>
-      <td>${student.last_login ? getTimeAgo(student.last_login) : "Never"}</td>
+<td class="last-login" data-login="${student.last_login}">
+  ${student.last_login ? getTimeAgo(student.last_login) : "Never"}
+</td>
       <td>
         <button class="delete-btn" data-id="${
           student.id
@@ -310,6 +313,18 @@
 
           attachDeleteHandlers("#studentTable tbody .delete-btn");
         }
+
+        function refreshLastLogins() {
+          document.querySelectorAll(".last-login").forEach((el) => {
+            const timestamp = el.dataset.login;
+            if (timestamp) {
+              el.textContent = getTimeAgo(timestamp);
+            }
+          });
+        }
+
+        // Update every 60 seconds
+        setInterval(refreshLastLogins, 60000);
 
         // Update librarian table
         function updateLibrarianTable(librarians) {
