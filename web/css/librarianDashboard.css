@@ -144,6 +144,7 @@ body {
   padding: 40px;
   flex: 1;
   transition: margin-left 0.3s ease;
+  overflow-y: auto;
 }
 
 .sidebar:hover ~ .main-content {
@@ -226,7 +227,6 @@ body {
   background-color: white;
   border-radius: 12px;
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-  overflow: hidden;
 }
 
 .styled-table {
