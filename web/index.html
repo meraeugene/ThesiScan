@@ -145,8 +145,6 @@
               const data = await response.json();
 
               localStorage.setItem("token", data.token);
-              //   localStorage.setItem("accountId", data.id);
-              //   localStorage.setItem("role", data.role);
 
               // AUTO-REDIRECT BASED ON ROLE
               if (data.role === "student") {
