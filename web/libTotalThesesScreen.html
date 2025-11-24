@@ -60,11 +60,11 @@
       <div class="stats">
         <div class="stat-box">
           <h3 id="totalTheses">0</h3>
-          <p>Total Archived</p>
+          <p>Total Archived Thesis</p>
         </div>
         <div class="stat-box">
           <h3 id="thisMonthRestored">0</h3>
-          <p>Restored This Month</p>
+          <p>Total Restored Thesis</p>
         </div>
       </div>
 
@@ -192,12 +192,13 @@
             );
           }).length;
 
+          console.log(theses.filter((thesis) => thesis.title === "test"));
+
           document.getElementById("thisMonthRestored").textContent =
             restoredThisMonth.toString();
         } catch (error) {
           console.error("Error fetching stats:", error);
           document.getElementById("totalTheses").textContent = "!";
-          document.getElementById("thisMonthUploads").textContent = "!";
         }
       }
 

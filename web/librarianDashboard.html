@@ -141,21 +141,20 @@
       function updateCompletedOcrScans() {
         const scans = JSON.parse(localStorage.getItem("ocr_scans") || "[]");
         const count = scans.length;
-        const completedStatLink = document.querySelector(
+        const completedStatBox = document.querySelector(
           '.stat-link[href="libCompletedOcrScreen.html"]'
         );
 
-        document.getElementById("completedOcrScans").textContent = count;
-
-        if (count === 0) {
-          // Disable click
-          completedStatLink.style.pointerEvents = "none";
-          completedStatLink.style.opacity = "0.5"; // visually indicate disabled
-          completedStatLink.style.cursor = "default";
+        if (count > 0) {
+          document.getElementById("completedOcrScans").textContent = count;
+          // Enable click
+          completedStatBox.style.display = "block";
+          completedStatBox.style.pointerEvents = "auto";
+          completedStatBox.style.opacity = "1";
+          completedStatBox.style.cursor = "pointer";
         } else {
-          completedStatLink.style.pointerEvents = "auto";
-          completedStatLink.style.opacity = "1";
-          completedStatLink.style.cursor = "pointer";
+          // Hide if 0
+          completedStatBox.style.display = "none";
         }
       }
 

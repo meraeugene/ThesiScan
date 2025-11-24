@@ -103,16 +103,10 @@
               .filter((thesis) => {
                 const matchProgram =
                   program === "All" || thesis.program_course === program;
-                const matchYear =
-                  year === "Any" ||
-                  new Date(thesis.date_published).getFullYear().toString() ===
-                    year;
                 const matchSearch =
                   !search ||
                   thesis.title.toLowerCase().includes(search.toLowerCase()) ||
-                  !search ||
                   thesis.authors.toLowerCase().includes(search.toLowerCase()) ||
-                  !search ||
                   (thesis.keywords &&
                     thesis.keywords
                       .toLowerCase()
@@ -124,12 +118,18 @@
                       .toLowerCase()
                       .includes(keyword.toLowerCase()));
 
-                return matchProgram && matchYear && matchKeyword && matchSearch;
+                return matchProgram && matchKeyword && matchSearch;
               })
-              .sort(
-                (a, b) =>
-                  new Date(b.date_published) - new Date(a.date_published)
-              );
+              .sort((a, b) => {
+                const dateA = new Date(a.date_published);
+                const dateB = new Date(b.date_published);
+
+                // Sort by newest first
+                if (dateB - dateA !== 0) return dateB - dateA;
+
+                // If same date, sort alphabetically
+                return a.title.localeCompare(b.title);
+              });
 
             if (filteredTheses.length === 0) {
               container.innerHTML = `<p>Sorry we couldn't find any results.</p>`;
