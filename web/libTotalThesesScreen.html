@@ -305,22 +305,30 @@
       }
 
       const tableTitle = document.getElementById("tableTitle");
+      const activeBtn = document.getElementById("showActiveBtn");
+      const deletedBtn = document.getElementById("showDeletedBtn");
 
-      document.getElementById("showActiveBtn").addEventListener("click", () => {
+      activeBtn.addEventListener("click", () => {
         updateStatLabels(false);
-        fetchRecentUploads(false); // Load active theses
-        fetchDashboardStats(false); // Update stats for active theses
-        tableTitle.textContent = "Active Theses"; // Change table header
+        fetchRecentUploads(false);
+        fetchDashboardStats(false);
+        tableTitle.textContent = "Active Theses";
+
+        // Toggle active class
+        activeBtn.classList.add("active");
+        deletedBtn.classList.remove("active");
       });
 
-      document
-        .getElementById("showDeletedBtn")
-        .addEventListener("click", () => {
-          updateStatLabels(true);
-          fetchRecentUploads(true); // Load deleted theses
-          fetchDashboardStats(true); // Update stats for deleted theses
-          tableTitle.textContent = "Archived Theses"; // Change table header
-        });
+      deletedBtn.addEventListener("click", () => {
+        updateStatLabels(true);
+        fetchRecentUploads(true);
+        fetchDashboardStats(true);
+        tableTitle.textContent = "Archived Theses";
+
+        // Toggle active class
+        deletedBtn.classList.add("active");
+        activeBtn.classList.remove("active");
+      });
 
       const searchInput = document.querySelector(".search-bar input");
 

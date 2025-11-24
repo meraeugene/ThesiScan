@@ -86,24 +86,34 @@ body {
   transition: background-color 0.2s ease;
 }
 
-/* Active Theses Button */
+/* Active Tab Style */
 #showActiveBtn {
-  background-color: #0288d1;
-  color: white;
+  background-color: #c3eafd;
+}
+
+#showActiveBtn.active {
+  background-color: #0277bd;
+  color: #fff;
 }
 
 #showActiveBtn:hover {
-  background-color: #0277bd;
+  background-color: #0288d1;
+  color: #fff;
 }
 
-/* Deleted Theses Button */
 #showDeletedBtn {
-  background-color: #c82333;
-  color: white;
+  background-color: #ffcdd2;
+  color: #fff;
+}
+
+#showDeletedBtn.active {
+  background-color: #d32f2f;
+  color: #fff;
 }
 
 #showDeletedBtn:hover {
-  background-color: #a71d2a;
+  background-color: #f44336;
+  color: #fff;
 }
 
 #restore-btn {
