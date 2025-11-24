@@ -89,6 +89,7 @@ body {
 /* Active Tab Style */
 #showActiveBtn {
   background-color: #c3eafd;
+  color: #fff;
 }
 
 #showActiveBtn.active {

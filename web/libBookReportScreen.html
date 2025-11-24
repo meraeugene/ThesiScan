@@ -142,6 +142,7 @@
 
           // Remaining theses list
           const topTitles = topFive.map((b) => b.title);
+
           const otherBooks = (data.most_accessed || []).filter(
             (b) => !topTitles.includes(b.title)
           );

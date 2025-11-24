@@ -308,6 +308,11 @@
       const activeBtn = document.getElementById("showActiveBtn");
       const deletedBtn = document.getElementById("showDeletedBtn");
 
+      // Set default tab as active
+      activeBtn.classList.add("active");
+      deletedBtn.classList.remove("active");
+      tableTitle.textContent = "Active Theses";
+
       activeBtn.addEventListener("click", () => {
         updateStatLabels(false);
         fetchRecentUploads(false);
