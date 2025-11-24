@@ -226,8 +226,12 @@
             return;
           }
 
-          // Sort theses by ID (newest first)
-          const sortedTheses = [...theses].sort((a, b) => b.id - a.id);
+          // Sort theses by ID (newest first) and then by title alphabetically
+          const sortedTheses = [...theses].sort((a, b) => {
+            const titleA = (a.title || "").toLowerCase();
+            const titleB = (b.title || "").toLowerCase();
+            return titleA.localeCompare(titleB);
+          });
 
           // Build table rows
           const rows = sortedTheses
