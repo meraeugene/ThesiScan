@@ -74,7 +74,7 @@
       </div>
 
       <div class="table-section">
-        <h3>Archived Theses</h3>
+        <h3 id="tableTitle">Active Theses</h3>
         <div class="table-wrapper" style="max-height: 600px; overflow-y: auto">
           <table>
             <thead>
@@ -159,46 +159,59 @@
       const notyf = new Notyf();
 
       // Function to fetch and update statistics
-      async function fetchDashboardStats() {
+      async function fetchDashboardStats(showDeleted = false) {
         try {
-          const response = await fetch(
-            "https://thesis-scan-backend-production.up.railway.app/theses"
-          );
-          if (!response.ok) {
-            throw new Error("Failed to fetch theses");
-          }
+          const url = showDeleted
+            ? "https://thesis-scan-backend-production.up.railway.app/theses/deleted"
+            : "https://thesis-scan-backend-production.up.railway.app/theses";
+
+          const response = await fetch(url);
+          if (!response.ok) throw new Error("Failed to fetch theses");
+
           const theses = await response.json();
 
-          if (!Array.isArray(theses)) {
+          if (!Array.isArray(theses))
             throw new Error("Expected array of theses");
-          }
 
-          // Update total theses count
-          document.getElementById("totalTheses").textContent =
-            theses.length.toString();
+          // Total count
+          document.getElementById("totalTheses").textContent = theses.length;
 
-          // Calculate this month's uploads using date_uploaded
+          // Count for this month
           const now = new Date();
           const currentYear = now.getFullYear();
-          const currentMonth = now.getMonth() + 1; // JavaScript months are 0-11
+          const currentMonth = now.getMonth() + 1;
 
-          // Count restored items this month
-          const restoredThisMonth = theses.filter((thesis) => {
-            if (!thesis.date_restored) return false;
-            const restoredDate = new Date(thesis.date_restored);
+          const thisMonthCount = theses.filter((thesis) => {
+            const dateField = showDeleted
+              ? thesis.date_restored
+              : thesis.date_uploaded;
+            if (!dateField) return false;
+            const date = new Date(dateField);
             return (
-              restoredDate.getFullYear() === currentYear &&
-              restoredDate.getMonth() + 1 === currentMonth
+              date.getFullYear() === currentYear &&
+              date.getMonth() + 1 === currentMonth
             );
           }).length;
 
-          console.log(theses.filter((thesis) => thesis.title === "test"));
-
           document.getElementById("thisMonthRestored").textContent =
-            restoredThisMonth.toString();
+            thisMonthCount;
         } catch (error) {
           console.error("Error fetching stats:", error);
           document.getElementById("totalTheses").textContent = "!";
+          document.getElementById("thisMonthRestored").textContent = "!";
+        }
+      }
+
+      function updateStatLabels(showDeleted = false) {
+        const totalLabel = document.querySelector("#totalTheses + p");
+        const monthLabel = document.querySelector("#thisMonthRestored + p");
+
+        if (showDeleted) {
+          totalLabel.textContent = "Total Archived Thesis";
+          monthLabel.textContent = "Total Restored Thesis";
+        } else {
+          totalLabel.textContent = "Total Uploads";
+          monthLabel.textContent = "Uploads This Month";
         }
       }
 
@@ -232,6 +245,8 @@
             const titleB = (b.title || "").toLowerCase();
             return titleA.localeCompare(titleB);
           });
+
+          console.log(sortedTheses.length);
 
           // Build table rows
           const rows = sortedTheses
@@ -289,12 +304,23 @@
         }
       }
 
-      document
-        .getElementById("showActiveBtn")
-        .addEventListener("click", () => fetchRecentUploads(false));
+      const tableTitle = document.getElementById("tableTitle");
+
+      document.getElementById("showActiveBtn").addEventListener("click", () => {
+        updateStatLabels(false);
+        fetchRecentUploads(false); // Load active theses
+        fetchDashboardStats(false); // Update stats for active theses
+        tableTitle.textContent = "Active Theses"; // Change table header
+      });
+
       document
         .getElementById("showDeletedBtn")
-        .addEventListener("click", () => fetchRecentUploads(true));
+        .addEventListener("click", () => {
+          updateStatLabels(true);
+          fetchRecentUploads(true); // Load deleted theses
+          fetchDashboardStats(true); // Update stats for deleted theses
+          tableTitle.textContent = "Archived Theses"; // Change table header
+        });
 
       const searchInput = document.querySelector(".search-bar input");
 
