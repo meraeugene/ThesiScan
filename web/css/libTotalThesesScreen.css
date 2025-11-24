@@ -88,7 +88,7 @@ body {
 
 /* Active Tab Style */
 #showActiveBtn {
-  background-color: #c3eafd;
+  background-color: #4daddd;
   color: #fff;
 }
 
@@ -103,7 +103,7 @@ body {
 }
 
 #showDeletedBtn {
-  background-color: #ffcdd2;
+  background-color: #e75c6a;
   color: #fff;
 }
 
