@@ -184,8 +184,7 @@
 
           // Count restored items this month
           const restoredThisMonth = theses.filter((thesis) => {
-            if (!thesis.date_restored) return false; // Only restored theses
-
+            if (!thesis.date_restored) return false;
             const restoredDate = new Date(thesis.date_restored);
             return (
               restoredDate.getFullYear() === currentYear &&
