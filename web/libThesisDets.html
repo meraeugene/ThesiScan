@@ -152,6 +152,9 @@
           }
 
           const thesis = await response.json();
+
+          document.title = thesis.title;
+
           currentThesis = thesis;
 
           if (!thesis || !thesis.title) {

@@ -62,7 +62,7 @@
             <input
               id="searchInput"
               type="text"
-              placeholder="Search thesis by title, author, or keyword..."
+              placeholder="Search thesis by title or author…"
             />
             <button onclick="handleSearch()">Search</button>
           </div>
@@ -81,7 +81,6 @@
               <option value="">Year of Publication</option>
               <option value="2025">2025</option>
               <option value="2024">2024</option>
-              <option value="2023">2023</option>
             </select>
             <input id="keywords" type="text" placeholder="Keywords..." />
           </div>
@@ -105,7 +104,7 @@
       const searchInput = document.getElementById("searchInput");
 
       function handleSearch() {
-        const keyword = document.getElementById("searchInput").value.trim();
+        const query = document.getElementById("searchInput").value.trim();
         const program = document.getElementById("programFilter").value || "All";
         const year = document.getElementById("yearFilter").value || "Any";
         const keywords =
@@ -114,6 +113,10 @@
         const params = new URLSearchParams();
         params.append("program", program);
         params.append("year", year);
+
+        if (query) {
+          params.append("search", query);
+        }
 
         if (keywords) {
           params.append("keywords", keywords);

@@ -60,11 +60,11 @@
       <div class="stats">
         <div class="stat-box">
           <h3 id="totalTheses">0</h3>
-          <p>Total Uploads</p>
+          <p>Total Archived</p>
         </div>
         <div class="stat-box">
-          <h3 id="thisMonthUploads">0</h3>
-          <p>Uploads This Month</p>
+          <h3 id="thisMonthRestored">0</h3>
+          <p>Restored This Month</p>
         </div>
       </div>
 
@@ -74,7 +74,7 @@
       </div>
 
       <div class="table-section">
-        <h3>Theses Uploaded</h3>
+        <h3>Archived Theses</h3>
         <div class="table-wrapper" style="max-height: 600px; overflow-y: auto">
           <table>
             <thead>
@@ -182,20 +182,19 @@
           const currentYear = now.getFullYear();
           const currentMonth = now.getMonth() + 1; // JavaScript months are 0-11
 
-          const monthlyUploads = theses.filter((thesis) => {
-            if (!thesis.date_uploaded) return false;
+          // Count restored items this month
+          const restoredThisMonth = theses.filter((thesis) => {
+            if (!thesis.date_restored) return false; // Only restored theses
 
-            const uploadDate = new Date(thesis.date_uploaded);
-
+            const restoredDate = new Date(thesis.date_restored);
             return (
-              uploadDate.getFullYear() === currentYear &&
-              uploadDate.getMonth() + 1 === currentMonth
+              restoredDate.getFullYear() === currentYear &&
+              restoredDate.getMonth() + 1 === currentMonth
             );
           }).length;
 
-          // Update monthly uploads count
-          document.getElementById("thisMonthUploads").textContent =
-            monthlyUploads.toString();
+          document.getElementById("thisMonthRestored").textContent =
+            restoredThisMonth.toString();
         } catch (error) {
           console.error("Error fetching stats:", error);
           document.getElementById("totalTheses").textContent = "!";
@@ -293,17 +292,41 @@
         .getElementById("showDeletedBtn")
         .addEventListener("click", () => fetchRecentUploads(true));
 
+      const searchInput = document.querySelector(".search-bar input");
+
+      searchInput.addEventListener("keyup", (e) => {
+        if (e.key === "Enter") {
+          handleSearch();
+        }
+
+        // 3. If cleared → Reset table
+        if (searchInput.value.trim() === "") {
+          showAllRows();
+        }
+      });
+
+      function showAllRows() {
+        const rows = document.querySelectorAll("#thesesTableBody tr");
+        rows.forEach((row) => {
+          row.style.display = "";
+        });
+      }
+
       // Function to handle search
       function handleSearch() {
         const searchInput = document.querySelector(".search-bar input");
         const searchTerm = searchInput.value.toLowerCase().trim();
 
         const rows = document.querySelectorAll("#thesesTableBody tr");
+
+        if (searchTerm === "") {
+          showAllRows();
+          return;
+        }
+
         rows.forEach((row) => {
-          if (row.cells && row.cells.length > 1) {
-            const text = row.textContent.toLowerCase();
-            row.style.display = text.includes(searchTerm) ? "" : "none";
-          }
+          const text = row.textContent.toLowerCase();
+          row.style.display = text.includes(searchTerm) ? "" : "none";
         });
       }
 
@@ -446,9 +469,6 @@
       document
         .querySelector(".search-bar button")
         .addEventListener("click", handleSearch);
-      document
-        .querySelector(".search-bar input")
-        .addEventListener("input", handleSearch);
 
       // Load initial data
       fetchDashboardStats();

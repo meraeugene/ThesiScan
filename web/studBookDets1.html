@@ -105,6 +105,8 @@
           if (!res.ok) throw new Error("Thesis not found");
           const thesis = await res.json();
 
+          document.title = thesis.title;
+
           // Fetch bookmarks
           let isBookmarked = false;
           try {

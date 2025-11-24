@@ -430,6 +430,15 @@
         const searchInput = document.getElementById("globalSearch");
         const searchBtn = document.getElementById("globalSearchBtn");
 
+        function showAllRows() {
+          const allRows = [
+            ...document.querySelectorAll("#studentTable tbody tr"),
+            ...document.querySelectorAll("#librarianTable tbody tr"),
+          ];
+
+          allRows.forEach((row) => (row.style.display = ""));
+        }
+
         function runSearch() {
           const term = searchInput.value.toLowerCase();
 
@@ -445,8 +454,17 @@
           });
         }
 
+        searchInput.addEventListener("keyup", (e) => {
+          if (e.key === "Enter") {
+            runSearch(); // Search on ENTER
+          }
+
+          if (searchInput.value.trim() === "") {
+            showAllRows();
+          }
+        });
+
         searchBtn.onclick = runSearch;
-        searchInput.onkeyup = runSearch;
 
         // Modal handling
         const addUserModal = document.getElementById("addUserModal");

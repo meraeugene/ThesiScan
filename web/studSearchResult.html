@@ -74,6 +74,7 @@
         const program = params.get("program") || "All";
         const year = params.get("year") || "Any";
         const keyword = params.get("keywords") || "";
+        const search = params.get("search") || "";
 
         document.getElementById("filterSummary").innerHTML = `
           <span><strong>Program:</strong> ${program}</span>
@@ -98,22 +99,38 @@
               return;
             }
             // Filter by program, year, tags, and keyword
-            const filteredTheses = theses.filter((thesis) => {
-              const matchProgram =
-                program === "All" || thesis.program_course === program;
-              const matchYear =
-                year === "Any" ||
-                new Date(thesis.date_published).getFullYear().toString() ===
-                  year;
-              const matchKeyword =
-                !keyword ||
-                (thesis.keywords &&
-                  thesis.keywords
-                    .toLowerCase()
-                    .includes(keyword.toLowerCase()));
+            const filteredTheses = theses
+              .filter((thesis) => {
+                const matchProgram =
+                  program === "All" || thesis.program_course === program;
+                const matchYear =
+                  year === "Any" ||
+                  new Date(thesis.date_published).getFullYear().toString() ===
+                    year;
+                const matchSearch =
+                  !search ||
+                  thesis.title.toLowerCase().includes(search.toLowerCase()) ||
+                  !search ||
+                  thesis.authors.toLowerCase().includes(search.toLowerCase()) ||
+                  !search ||
+                  (thesis.keywords &&
+                    thesis.keywords
+                      .toLowerCase()
+                      .includes(search.toLowerCase()));
+                const matchKeyword =
+                  !keyword ||
+                  (thesis.keywords &&
+                    thesis.keywords
+                      .toLowerCase()
+                      .includes(keyword.toLowerCase()));
 
-              return matchProgram && matchYear && matchKeyword;
-            });
+                return matchProgram && matchYear && matchKeyword && matchSearch;
+              })
+              .sort(
+                (a, b) =>
+                  new Date(b.date_published) - new Date(a.date_published)
+              );
+
             if (filteredTheses.length === 0) {
               container.innerHTML = `<p>Sorry we couldn't find any results.</p>`;
             } else {

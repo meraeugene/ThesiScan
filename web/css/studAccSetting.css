@@ -130,6 +130,7 @@ body {
   padding: 40px;
   flex: 1;
   transition: margin-left 0.3s ease;
+  overflow-y: auto;
 }
 
 .sidebar:hover ~ .main-content {
