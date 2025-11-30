@@ -259,9 +259,16 @@
 
               return `
         <tr>
-          <td><a href="libThesisDets.html?thesis_id=${
-            thesis.id
-          }" class="book-link">${thesis.title || "Untitled"}</a></td>
+<td>
+  ${
+    showDeleted
+      ? `<span class="disabled-link">${thesis.title || "Untitled"}</span>`
+      : `<a href="libThesisDets.html?thesis_id=${
+          thesis.id
+        }" class="book-link">${thesis.title || "Untitled"}</a>`
+  }
+</td>
+
           <td>${thesis.authors || "Unknown"}</td>
           <td>${thesis.program_course || "N/A"}</td>
           <td>${

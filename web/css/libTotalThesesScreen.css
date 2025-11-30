@@ -92,6 +92,13 @@ body {
   color: #fff;
 }
 
+.disabled-link {
+  color: gray;
+  cursor: not-allowed;
+  text-decoration: none;
+  font-style: italic;
+}
+
 #showActiveBtn.active {
   background-color: #0277bd;
   color: #fff;
